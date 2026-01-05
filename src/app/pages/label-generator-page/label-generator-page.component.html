@@ -1,0 +1,164 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>Label Generator</h1>
+      <p class="subtitle">Select a sheet, filter items, and print labels</p>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="onPosSync()" [disabled]="syncing$ | async">
+        <mat-icon>sync</mat-icon>
+        POS Sync
+      </button>
+      <button mat-stroked-button color="accent" (click)="togglePrintedHistory()">
+        <mat-icon>history</mat-icon>
+        {{ showPrintedHistory ? 'Show All Items' : 'Printed History' }}
+      </button>
+      <div class="sync-status" *ngIf="lastSync$ | async as lastSync">
+        <small>Last Sync: {{ lastSync | date: 'short' }}</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🆕 NEW: Cascading Filters Section -->
+  <mat-card class="cascading-filters-card">
+    <mat-card-header>
+      <div class="filter-header">
+        <div class="filter-title">
+          <mat-icon>filter_list</mat-icon>
+          <h3>Filter Items</h3>
+        </div>
+        <button mat-stroked-button color="warn" (click)="resetFilters()" 
+                [disabled]="!selectedDepartment() && !selectedType() && !selectedSubType() && !selectedBrand()">
+          <mat-icon>clear</mat-icon>
+          Reset Filters
+        </button>
+      </div>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <div class="cascading-filters" *ngIf="!loadingFilters(); else loadingTemplate">
+        <!-- Department Filter -->
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>
+            <mat-icon>store</mat-icon>
+            Select Department
+          </mat-label>
+          <mat-select [value]="selectedDepartment()" 
+                      (selectionChange)="onDepartmentChange($event.value)">
+            <mat-option [value]="null">All Departments</mat-option>
+            <mat-option *ngFor="let dept of departments()" [value]="dept.DepartmentId">
+              {{ dept.DeptName }}
+            </mat-option>
+          </mat-select>
+          <mat-hint>{{ departments().length }} department(s) available</mat-hint>
+        </mat-form-field>
+
+        <!-- Item Type Filter (cascades from Department) -->
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>
+            <mat-icon>category</mat-icon>
+            Select Item Type
+          </mat-label>
+          <mat-select [value]="selectedType()" 
+                      (selectionChange)="onTypeChange($event.value)"
+                      [disabled]="!selectedDepartment()">
+            <mat-option [value]="null">All Types</mat-option>
+            <mat-option *ngFor="let type of availableTypes()" [value]="type.GID">
+              {{ type.ItemName }}
+            </mat-option>
+          </mat-select>
+          <mat-hint *ngIf="selectedDepartment()">
+            {{ availableTypes().length }} type(s) for selected department
+          </mat-hint>
+          <mat-hint *ngIf="!selectedDepartment()">Select department first</mat-hint>
+        </mat-form-field>
+
+        <!-- Item Sub Type Filter (cascades from Type) -->
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>
+            <mat-icon>style</mat-icon>
+            Select Item Sub Type
+          </mat-label>
+          <mat-select [value]="selectedSubType()" 
+                      (selectionChange)="onSubTypeChange($event.value)"
+                      [disabled]="!selectedType()">
+            <mat-option [value]="null">All Sub Types</mat-option>
+            <mat-option *ngFor="let subType of availableSubTypes()" [value]="subType.GID">
+              {{ subType.ItemName }}
+            </mat-option>
+          </mat-select>
+          <mat-hint *ngIf="selectedType()">
+            {{ availableSubTypes().length }} sub-type(s) for selected type
+          </mat-hint>
+          <mat-hint *ngIf="!selectedType()">Select type first</mat-hint>
+        </mat-form-field>
+
+        <!-- Brand Filter (independent) -->
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>
+            <mat-icon>local_offer</mat-icon>
+            Select Item Brand
+          </mat-label>
+          <mat-select [value]="selectedBrand()" 
+                      (selectionChange)="onBrandChange($event.value)">
+            <mat-option [value]="null">All Brands</mat-option>
+            <mat-option *ngFor="let brand of allBrands()" [value]="brand.GID">
+              {{ brand.ItemName }}
+            </mat-option>
+          </mat-select>
+          <mat-hint>{{ allBrands().length }} brand(s) available</mat-hint>
+        </mat-form-field>
+
+        <!-- Show Items Button -->
+        <div class="filter-actions">
+          <button mat-raised-button color="primary" 
+                  (click)="onShowItems()"
+                  class="show-items-btn">
+            <mat-icon>search</mat-icon>
+            Show Items
+          </button>
+          <div class="filter-summary" *ngIf="showingFilteredItems()">
+            <mat-icon class="success-icon">check_circle</mat-icon>
+            <span>Filters applied successfully</span>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #loadingTemplate>
+        <div class="loading-filters">
+          <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
+          <p>Loading filter options...</p>
+        </div>
+      </ng-template>
+
+      <div class="filter-error" *ngIf="filterError()">
+        <mat-icon>error</mat-icon>
+        <span>{{ filterError() }}</span>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+
+
+  <mat-card class="generator-card">
+    <mat-card-content>
+      <app-item-list
+        [items]="(itemsSource$ | async) ?? []"
+        [syncing]="(syncing$ | async) ?? false"
+        (selectionChange)="onSelectionChange($event)"
+        (printRequested)="onPrintRequested($event)"
+      ></app-item-list>
+    </mat-card-content>
+  </mat-card>
+
+  <app-print-preview
+    *ngIf="showPreview && selectedTemplate && selectedPageType"
+    [items]="selectedItems"
+    [template]="selectedTemplate"
+    [pageType]="selectedPageType"
+    [copies]="selectedCopies"
+    [orientation]="selectedOrientation"
+    (closed)="onPreviewClosed()"
+    (printed)="onPrinted()"
+  ></app-print-preview>
+</div>

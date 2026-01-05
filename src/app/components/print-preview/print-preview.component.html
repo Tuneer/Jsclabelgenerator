@@ -1,0 +1,106 @@
+<div class="preview-overlay">
+  <div class="preview-dialog">
+    <div class="preview-header no-print">
+      <h2>Print Preview - {{ getPageTypeLabel() }}</h2>
+      <span class="item-count">{{ getDisplayItems().length }} item(s) selected</span>
+      <span class="spacer"></span>
+      <button mat-icon-button (click)="close()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="preview-actions no-print">
+      <button mat-raised-button color="primary" (click)="print()">
+        <mat-icon>print</mat-icon>
+        Final Print
+      </button>
+      
+      <button mat-stroked-button color="accent" (click)="showPrintInstructions()">
+        <mat-icon>info</mat-icon>
+        Print Setup Guide
+      </button>
+      
+      <span class="print-info">
+        {{ getPrintInfo() }}
+      </span>
+    </div>
+
+    <!-- Single Label Mode: Each item on separate page -->
+    <div *ngIf="isSingleLabel" class="single-label-container">
+      <div class="single-label-page" *ngFor="let slot of labelSlots; let i = index">
+        <div class="label-content" [style.font-size.rem]="template.fontScale">
+          <div class="label-name" *ngIf="shouldShowField('name')">{{ getFieldValue(slot.item, 'name') }}</div>
+          <div class="label-size" *ngIf="shouldShowField('size')">Size: {{ getFieldValue(slot.item, 'size') }}</div>
+          <div class="label-price" *ngIf="shouldShowField('price')" [class.emphasize]="template.emphasizePrice">
+            {{ getFieldValue(slot.item, 'price') | currency }}
+          </div>
+          <div class="label-barcode" *ngIf="shouldShowField('barcode') && template.showBarcode">
+            {{ getFieldValue(slot.item, 'barcode') }}
+          </div>
+          <div class="label-field" *ngIf="shouldShowField('distributor')">
+            Dist: {{ getFieldValue(slot.item, 'distributor') }}
+          </div>
+          <div class="label-field" *ngIf="shouldShowField('supplierItemCode')">
+            Code: {{ getFieldValue(slot.item, 'supplierItemCode') }}
+          </div>
+          <div class="label-field" *ngIf="shouldShowField('subType')">
+            Type: {{ getFieldValue(slot.item, 'subType') }}
+          </div>
+          <div class="label-field" *ngIf="shouldShowField('department')">
+            Dept: {{ getFieldValue(slot.item, 'department') }}
+          </div>
+          <div class="label-field" *ngIf="shouldShowField('brand')">
+            Brand: {{ getFieldValue(slot.item, 'brand') }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grid Mode: Fixed layout with A4 dimensions -->
+    <div *ngIf="!isSingleLabel" class="a4-page-container">
+      <div class="a4-page" [ngClass]="pageType">
+        <div class="label-grid" [ngClass]="pageType">
+          <!-- Iterate through ALL slots (filled + empty) -->
+          <div 
+            class="label-slot" 
+            *ngFor="let slot of labelSlots; let i = index"
+            [class.empty]="slot.isEmpty"
+            [class.filled]="!slot.isEmpty">
+            
+            <!-- Show content only for filled slots -->
+            <div *ngIf="!slot.isEmpty" class="label-content" [style.font-size.rem]="template.fontScale">
+              <div class="label-name" *ngIf="shouldShowField('name')">{{ getFieldValue(slot.item, 'name') }}</div>
+              <div class="label-size" *ngIf="shouldShowField('size')">{{ getFieldValue(slot.item, 'size') }}</div>
+              <div class="label-price" *ngIf="shouldShowField('price')" [class.emphasize]="template.emphasizePrice">
+                {{ getFieldValue(slot.item, 'price') | currency }}
+              </div>
+              <div class="label-barcode" *ngIf="shouldShowField('barcode') && template.showBarcode">
+                {{ getFieldValue(slot.item, 'barcode') }}
+              </div>
+              <div class="label-field" *ngIf="shouldShowField('distributor')">
+                {{ getFieldValue(slot.item, 'distributor') }}
+              </div>
+              <div class="label-field" *ngIf="shouldShowField('supplierItemCode')">
+                {{ getFieldValue(slot.item, 'supplierItemCode') }}
+              </div>
+              <div class="label-field" *ngIf="shouldShowField('subType')">
+                {{ getFieldValue(slot.item, 'subType') }}
+              </div>
+              <div class="label-field" *ngIf="shouldShowField('department')">
+                {{ getFieldValue(slot.item, 'department') }}
+              </div>
+              <div class="label-field" *ngIf="shouldShowField('brand')">
+                {{ getFieldValue(slot.item, 'brand') }}
+              </div>
+            </div>
+            
+            <!-- Empty slot placeholder (visible in preview, hidden in print) -->
+            <div *ngIf="slot.isEmpty" class="empty-label-placeholder no-print">
+              <span>Empty</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

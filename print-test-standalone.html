@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Label Print Test - 3 Labels (29mm × 90mm Portrait)</title>
+  <style>
+    /* ============================================
+       CRITICAL: @page size must match physical label
+       ============================================ */
+    @page { 
+      size: 29mm 90mm portrait; 
+      margin: 0; 
+    }
+    
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+    }
+    
+    html { 
+      width: 100%;
+      height: 100%;
+    }
+    
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      font-size: 10pt;
+      background: #f0f0f0;
+    }
+    
+    /* ============================================
+       Screen preview styling (hidden in print)
+       ============================================ */
+    .test-info {
+      background: #fff;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .test-info h1 {
+      color: #1976d2;
+      margin-bottom: 16px;
+    }
+    
+    .test-info ul {
+      list-style: none;
+      padding: 0;
+    }
+    
+    .test-info li {
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .test-info li:last-child {
+      border-bottom: none;
+    }
+    
+    .test-info strong {
+      display: inline-block;
+      width: 180px;
+      color: #333;
+    }
+    
+    .print-btn {
+      background: #1976d2;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 16px;
+    }
+    
+    .print-btn:hover {
+      background: #1565c0;
+    }
+    
+    .labels-container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    /* ============================================
+       Each label = 1 page (page-break-after: always)
+       ============================================ */
+    .single-label-page {
+      width: 29mm;
+      height: 90mm;
+      padding: 2mm;
+      margin: 0 auto 20px;
+      page-break-after: always;
+      page-break-inside: avoid;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      background: white;
+      border: 2px solid #1976d2;
+      position: relative;
+    }
+    
+    .single-label-page:last-child {
+      page-break-after: auto;
+      margin-bottom: 0;
+    }
+    
+    /* ============================================
+       Label content layout (portrait)
+       ============================================ */
+    .label-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 1mm;
+      max-width: 100%;
+      max-height: 100%;
+      overflow: hidden;
+    }
+    
+    .label-name { 
+      font-size: 1em; 
+      font-weight: 600; 
+      word-wrap: break-word; 
+      max-width: 100%;
+      overflow: hidden;
+    }
+    
+    .label-size { 
+      font-size: 0.8em; 
+      color: #666; 
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .label-price { 
+      font-size: 1.1em; 
+      font-weight: 700; 
+      color: #d32f2f; 
+    }
+    
+    .label-barcode { 
+      font-size: 0.75em; 
+      font-family: 'Courier New', monospace; 
+      overflow: hidden;
+      text-overflow: ellipsis;
+      background: #f5f5f5;
+      padding: 2px 4px;
+    }
+    
+    .label-field { 
+      font-size: 0.7em; 
+      color: #555; 
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+    
+    /* ============================================
+       Print-specific overrides
+       ============================================ */
+    @media print {
+      body {
+        padding: 0;
+        background: white;
+      }
+      
+      .test-info,
+      .labels-container {
+        background: none;
+        padding: 0;
+        margin: 0;
+        box-shadow: none;
+        border: none;
+      }
+      
+      .print-btn {
+        display: none;
+      }
+      
+      .single-label-page {
+        width: 29mm;
+        height: 90mm;
+        margin: 0;
+        padding: 2mm;
+        border: none;
+        background: white;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Test Information (hidden in print) -->
+  <div class="test-info">
+    <h1>🧪 Label Print Test</h1>
+    <ul>
+      <li><strong>Test Purpose:</strong> Validate Brother QL print logic</li>
+      <li><strong>Label Size:</strong> 29mm × 90mm (1.14" × 3.54")</li>
+      <li><strong>Orientation:</strong> Portrait</li>
+      <li><strong>Total Pages:</strong> 3 (one label per page)</li>
+      <li><strong>Expected Behavior:</strong> Each label on separate page with page break</li>
+    </ul>
+    
+    <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+    
+    <h2 style="margin-top: 20px; color: #333;">✅ Validation Checklist:</h2>
+    <ul style="margin-top: 10px;">
+      <li>☐ Print dialog shows custom paper size (29mm × 90mm)</li>
+      <li>☐ Preview shows 3 separate pages</li>
+      <li>☐ Each page contains 1 label only</li>
+      <li>☐ Content fits within label boundaries</li>
+      <li>☐ Save as PDF → Check PDF properties → Page size = 29mm × 90mm</li>
+    </ul>
+  </div>
+
+  <!-- Labels (will print on separate pages) -->
+  <div class="labels-container">
+    <h2 style="margin-bottom: 20px; color: #333;">Preview (Screen Only):</h2>
+    
+    <!-- Label 1 -->
+    <div class="single-label-page">
+      <div class="label-content">
+        <div class="label-name">Absolut Vodka</div>
+        <div class="label-size">750ml</div>
+        <div class="label-price">$24.99</div>
+        <div class="label-barcode">1234567890123</div>
+        <div class="label-field">Brand: Absolut</div>
+      </div>
+    </div>
+    
+    <!-- Label 2 -->
+    <div class="single-label-page">
+      <div class="label-content">
+        <div class="label-name">Jack Daniel's Whiskey</div>
+        <div class="label-size">1L</div>
+        <div class="label-price">$32.50</div>
+        <div class="label-barcode">9876543210987</div>
+        <div class="label-field">Brand: Jack Daniel's</div>
+      </div>
+    </div>
+    
+    <!-- Label 3 -->
+    <div class="single-label-page">
+      <div class="label-content">
+        <div class="label-name">Corona Extra Beer</div>
+        <div class="label-size">355ml</div>
+        <div class="label-price">$8.99</div>
+        <div class="label-barcode">5551234567890</div>
+        <div class="label-field">Brand: Corona</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Log page dimensions on load
+    window.addEventListener('load', () => {
+      console.log('🧪 Print Test Loaded');
+      console.log('📄 Expected: 3 pages, 29mm × 90mm each');
+      console.log('🎯 Action: Click Print button or Ctrl+P');
+      console.log('✅ Validation: Check print preview page count and dimensions');
+    });
+
+    // Intercept print event for logging
+    window.addEventListener('beforeprint', () => {
+      console.log('🖨️ Print dialog opened');
+      console.log('⚙️ Ensure: Paper size = 29mm × 90mm, Scale = 100%');
+    });
+
+    window.addEventListener('afterprint', () => {
+      console.log('✅ Print completed or dialog closed');
+    });
+  </script>
+</body>
+</html>

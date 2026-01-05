@@ -1,0 +1,31 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>Excel Data Import</h1>
+      <p class="subtitle">Upload your POS item data from Excel to populate the local database</p>
+    </div>
+    <div class="system-info">
+      <div class="info-item">
+        <span class="info-value">{{ ipAddress }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-value">{{ currentDateTime }}</span>
+      </div>
+    </div>
+  </div>
+
+  <mat-card class="import-card">
+    <mat-card-content>
+      <app-excel-import></app-excel-import>
+    </mat-card-content>
+  </mat-card>
+
+  <div class="help-section">
+    <h3>Instructions</h3>
+    <ul>
+      <li>Select an Excel file (.xlsx or .xls) containing your item data</li>
+      <li>Ensure columns match: Item ID, Brand, Category, Sub-Category, Name, Size, Price, Description, SKU, Barcode</li>
+      <li>Imported items will be stored locally and available in the Label Generator</li>
+    </ul>
+  </div>
+</div>

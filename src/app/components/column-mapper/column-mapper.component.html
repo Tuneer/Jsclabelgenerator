@@ -1,0 +1,126 @@
+<div class="mapper-container">
+  <div class="mapper-header">
+    <h2>Map Excel Columns to Fields</h2>
+    <p class="subtitle" *ngIf="totalSheets > 1">
+      <strong>Sheet {{ currentSheetNumber }}/{{ totalSheets }}: "{{ sheetName }}"</strong>
+    </p>
+    <p class="subtitle" *ngIf="totalSheets === 1">
+      Configure how Excel columns should be imported into the database
+    </p>
+  </div>
+
+  <!-- Template Selection -->
+  <mat-card class="template-section" *ngIf="savedTemplates.length > 0">
+    <mat-card-content>
+      <div class="template-controls">
+        <mat-form-field appearance="outline" class="template-select">
+          <mat-label>Load Saved Template</mat-label>
+          <mat-select [(ngModel)]="selectedTemplateId" (selectionChange)="loadTemplate()">
+            <mat-option value="">-- New Mapping --</mat-option>
+            <mat-option *ngFor="let template of savedTemplates" [value]="template.id">
+              {{ template.name }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <button mat-icon-button color="warn" *ngIf="selectedTemplateId" (click)="deleteTemplate(selectedTemplateId)" matTooltip="Delete template">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Column Mappings -->
+  <div class="mappings-list">
+    <div class="mapping-info">
+      <p>{{ excelColumns.length }} columns detected. Configure mapping below:</p>
+    </div>
+    
+    <div class="mapping-item" *ngFor="let mapping of mappings.slice(0, 50); let i = index">
+      <div class="excel-column">
+        <div class="column-header">
+          <mat-icon class="column-icon">table_chart</mat-icon>
+          <span class="column-name">{{ mapping.excelColumn }}</span>
+          <mat-chip [class.custom-chip]="mapping.isCustomField">
+            {{ mapping.isCustomField ? 'Custom' : 'Standard' }}
+          </mat-chip>
+        </div>
+        <div class="sample-value" *ngIf="getSampleValue(mapping.excelColumn)">
+          <small>Sample: {{ getSampleValue(mapping.excelColumn) }}</small>
+        </div>
+      </div>
+
+      <mat-icon class="arrow-icon">arrow_forward</mat-icon>
+
+      <div class="app-field">
+        <mat-form-field appearance="outline" class="field-select">
+          <mat-label>Map to Field</mat-label>
+          <mat-select [value]="mapping.appField" (selectionChange)="onFieldChange(i, $event.value)">
+            <mat-optgroup label="Standard Fields">
+              <mat-option *ngFor="let field of getAvailableFields(mapping)" [value]="field">
+                {{ field }}
+              </mat-option>
+              <mat-option [value]="mapping.appField" *ngIf="!mapping.isCustomField">
+                {{ mapping.appField }}
+              </mat-option>
+            </mat-optgroup>
+            <mat-optgroup label="Custom Fields">
+              <mat-option [value]="mapping.appField" *ngIf="mapping.isCustomField">
+                {{ mapping.appField }} (current)
+              </mat-option>
+            </mat-optgroup>
+          </mat-select>
+        </mat-form-field>
+
+        <div class="custom-field-input">
+          <mat-form-field appearance="outline" class="custom-input">
+            <mat-label>Or create custom field</mat-label>
+            <input matInput 
+                   placeholder="e.g., vintageYear" 
+                   [value]="newCustomFields.get(mapping.excelColumn) || ''"
+                   (input)="newCustomFields.set(mapping.excelColumn, $any($event.target).value)">
+          </mat-form-field>
+          <button mat-mini-fab color="primary" 
+                  (click)="addCustomField(mapping.excelColumn)"
+                  [disabled]="!newCustomFields.get(mapping.excelColumn)"
+                  matTooltip="Create custom field">
+            <mat-icon>add</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="more-columns" *ngIf="mappings.length > 50">
+      <p><mat-icon>info</mat-icon> {{ mappings.length - 50 }} more columns will be mapped automatically. Scroll down after confirmation to see all data.</p>
+    </div>
+  </div>
+
+  <!-- Save Template Section -->
+  <mat-card class="save-template-section" *ngIf="showSaveTemplate">
+    <mat-card-content>
+      <mat-form-field appearance="outline" class="template-name-input">
+        <mat-label>Template Name</mat-label>
+        <input matInput [(ngModel)]="templateName" placeholder="e.g., Vendor A Format">
+      </mat-form-field>
+      <div class="template-actions">
+        <button mat-raised-button color="primary" (click)="saveCurrentTemplate()">
+          Save Template
+        </button>
+        <button mat-button (click)="showSaveTemplate = false">Cancel</button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Action Buttons -->
+  <div class="action-buttons">
+    <button mat-raised-button (click)="showSaveTemplate = true" *ngIf="!showSaveTemplate">
+      <mat-icon>save</mat-icon>
+      Save as Template
+    </button>
+    <div class="spacer"></div>
+    <button mat-button (click)="cancel()">Cancel</button>
+    <button mat-raised-button color="primary" (click)="confirmMapping()">
+      <mat-icon>check</mat-icon>
+      Confirm & Import
+    </button>
+  </div>
+</div>

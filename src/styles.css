@@ -1,0 +1,172 @@
+/* Angular Material Theme */
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+
+/* Global styles */
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  overflow-x: hidden; /* Prevent horizontal scroll */
+}
+
+body {
+  background-color: #fafafa;
+  width: 100%;
+  max-width: 100vw; /* Prevent overflow on mobile */
+}
+
+app-root {
+  display: block;
+  height: 100%;
+}
+
+/* Material Design Icons Fix */
+.mat-icon {
+  font-family: 'Material Icons' !important;
+  vertical-align: middle;
+}
+
+/* Material Card Styling */
+.mat-mdc-card {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important;
+  border-radius: 8px !important;
+  overflow: hidden;
+}
+
+.mat-mdc-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+
+/* Material Button Styling */
+.mat-mdc-raised-button, .mat-mdc-unelevated-button {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15) !important;
+  border-radius: 4px !important;
+}
+
+.mat-mdc-button {
+  border-radius: 4px !important;
+}
+
+/* Fix Material Table */
+.mat-mdc-table {
+  width: 100%;
+  background: white;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.mat-mdc-header-cell {
+  font-weight: 600 !important;
+  color: #333 !important;
+  background: #f5f5f5 !important;
+}
+
+.mat-mdc-row:hover {
+  background: #fafafa;
+}
+
+/* Material Form Fields */
+.mat-mdc-form-field {
+  font-size: 14px;
+}
+
+.mat-mdc-text-field-wrapper {
+  border-radius: 4px !important;
+}
+
+/* Material Toolbar */
+.mat-toolbar {
+  font-weight: 400 !important;
+}
+
+/* Responsive Typography */
+@media (max-width: 768px) {
+  html {
+    font-size: 14px;
+  }
+
+  .mat-mdc-card {
+    border-radius: 6px !important;
+  }
+
+  .mat-mdc-form-field {
+    font-size: 13px;
+  }
+
+  .mat-mdc-button,
+  .mat-mdc-raised-button,
+  .mat-mdc-unelevated-button {
+    font-size: 14px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  html {
+    font-size: 13px;
+  }
+
+  .mat-mdc-card {
+    border-radius: 4px !important;
+    margin: 8px !important;
+  }
+
+  .mat-mdc-form-field {
+    font-size: 12px;
+  }
+
+  .mat-mdc-button,
+  .mat-mdc-raised-button,
+  .mat-mdc-unelevated-button {
+    font-size: 13px !important;
+    padding: 8px 12px !important;
+  }
+
+  .mat-mdc-header-cell,
+  .mat-mdc-cell {
+    padding: 8px 4px !important;
+  }
+}
+
+/* Responsive Container Utilities */
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+@media (max-width: 1024px) {
+  .container {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 12px;
+  }
+}
+
+/* Touch-friendly Targets */
+@media (max-width: 768px) {
+  button,
+  a,
+  .clickable {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Prevent Text Selection on Mobile */
+@media (max-width: 768px) {
+  .mat-mdc-button,
+  .mat-mdc-raised-button,
+  .mat-mdc-icon-button {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+  }
+}

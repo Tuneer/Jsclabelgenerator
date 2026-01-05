@@ -1,0 +1,41 @@
+[
+  {
+    "id": "1",
+    "brand": "Brand A",
+    "category": "Whisky",
+    "subCategory": "Single Malt",
+    "name": "Highland Reserve 12Y",
+    "size": "750ml",
+    "price": 59.99,
+    "description": "Smooth oak finish",
+    "sku": "WH-001",
+    "barcode": "1234567890123",
+    "lastUpdated": "2025-01-01T10:00:00Z"
+  },
+  {
+    "id": "2",
+    "brand": "Brand B",
+    "category": "Vodka",
+    "subCategory": "Premium",
+    "name": "Crystal Ice",
+    "size": "750ml",
+    "price": 29.5,
+    "description": "Triple distilled",
+    "sku": "VO-010",
+    "barcode": "2345678901234",
+    "lastUpdated": "2025-01-02T12:00:00Z"
+  },
+  {
+    "id": "3",
+    "brand": "Brand C",
+    "category": "Wine",
+    "subCategory": "Red",
+    "name": "Sunset Merlot",
+    "size": "750ml",
+    "price": 19.99,
+    "description": "Fruity and soft",
+    "sku": "WI-050",
+    "barcode": "3456789012345",
+    "lastUpdated": "2025-01-03T09:30:00Z"
+  }
+]

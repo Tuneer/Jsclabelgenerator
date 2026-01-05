@@ -1,0 +1,170 @@
+<div class="excel-management-page">
+  <div class="page-header">
+    <h1>
+      <mat-icon>folder_open</mat-icon>
+      Excel Management
+    </h1>
+    <p class="subtitle">View and manage your uploaded Excel files and sheets</p>
+  </div>
+
+  <!-- Summary Stats -->
+  <div class="stats-row" *ngIf="!loading && excelFiles.length > 0">
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon">
+          <mat-icon>description</mat-icon>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value">{{ excelFiles.length }}</div>
+          <div class="stat-label">Excel Files</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon">
+          <mat-icon>table_chart</mat-icon>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value">{{ totalSheets }}</div>
+          <div class="stat-label">Total Sheets</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon">
+          <mat-icon>storage</mat-icon>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value">{{ totalRows }}</div>
+          <div class="stat-label">Total Rows</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="loading">
+    <mat-progress-spinner mode="indeterminate" diameter="50"></mat-progress-spinner>
+    <p>Loading Excel files...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!loading && excelFiles.length === 0">
+    <mat-icon>cloud_upload</mat-icon>
+    <h2>No Excel Files Uploaded</h2>
+    <p>Import Excel files from the Excel Import page to see them here.</p>
+    <button mat-raised-button color="primary" routerLink="/excel-import">
+      <mat-icon>upload_file</mat-icon>
+      Go to Excel Import
+    </button>
+  </div>
+
+  <!-- Excel Files List -->
+  <div class="excel-files-container" *ngIf="!loading && excelFiles.length > 0">
+    <mat-card *ngFor="let excelFile of excelFiles" class="excel-card">
+      <mat-card-header (click)="toggleExcelExpansion(excelFile)" class="clickable-header">
+        <div class="excel-header-content">
+          <div class="excel-info">
+            <mat-icon class="excel-icon">description</mat-icon>
+            <div class="excel-details">
+              <h3>{{ excelFile.fullName }}</h3>
+              <p class="upload-date">📅 Uploaded: {{ excelFile.uploadedAt | date:'short' }}</p>
+              <p class="storage-location">💾 Storage: {{ excelFile.storageLocation }}</p>
+              <p class="excel-summary">📊 {{ excelFile.totalRows }} rows • {{ excelFile.totalColumns }} columns</p>
+            </div>
+          </div>
+          <div class="excel-stats">
+            <button 
+              mat-icon-button 
+              color="warn" 
+              (click)="deleteExcelFile(excelFile, $event)"
+              matTooltip="Delete entire Excel file"
+              class="delete-excel-btn">
+              <mat-icon>delete</mat-icon>
+            </button>
+            <mat-chip>{{ excelFile.sheets.length }} sheet(s)</mat-chip>
+            <mat-icon class="expand-icon">{{ excelFile.expanded ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </div>
+        </div>
+      </mat-card-header>
+
+      <!-- Sheets Grid (Expandable) -->
+      <mat-card-content *ngIf="excelFile.expanded" class="sheets-content">
+        <div class="sheets-grid">
+          <mat-card 
+            *ngFor="let sheet of excelFile.sheets" 
+            class="sheet-card"
+            [class.selected]="selectedSheet?.tableName === sheet.tableName"
+            (click)="onSheetClick(sheet)">
+            <mat-card-content>
+              <div class="sheet-header">
+                <mat-icon>table_chart</mat-icon>
+                <h4>{{ sheet.sheetName }}</h4>
+              </div>
+              <div class="sheet-stats">
+                <div class="stat-item">
+                  <mat-icon>view_column</mat-icon>
+                  <span>{{ sheet.columns.length }} columns</span>
+                </div>
+                <div class="stat-item">
+                  <mat-icon>view_list</mat-icon>
+                  <span>{{ sheet.rowCount }} rows</span>
+                </div>
+              </div>
+              <div class="sheet-table-name">
+                <code>{{ sheet.tableName }}</code>
+              </div>
+              <div class="sheet-actions">
+                <button 
+                  mat-icon-button 
+                  color="warn" 
+                  (click)="deleteSheet(sheet, $event)"
+                  matTooltip="Delete sheet">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Sheet Data Table -->
+  <div class="sheet-data-section" *ngIf="selectedSheet">
+    <h2>
+      <mat-icon>table_view</mat-icon>
+      {{ selectedSheet.sheetName }} - Data View
+    </h2>
+
+    <!-- Loading Data -->
+    <div class="loading-data" *ngIf="loadingData">
+      <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
+      <p>Loading sheet data...</p>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-container" *ngIf="!loadingData && sheetData.length > 0">
+      <table mat-table [dataSource]="sheetData" class="data-table">
+        <!-- Dynamic Columns -->
+        <ng-container *ngFor="let column of displayedColumns" [matColumnDef]="column">
+          <th mat-header-cell *matHeaderCellDef>{{ column }}</th>
+          <td mat-cell *matCellDef="let row">{{ row[column] }}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    </div>
+
+    <!-- Empty Data -->
+    <div class="empty-data" *ngIf="!loadingData && sheetData.length === 0">
+      <mat-icon>inbox</mat-icon>
+      <p>No data available in this sheet</p>
+    </div>
+  </div>
+</div>

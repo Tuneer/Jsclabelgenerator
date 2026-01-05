@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zebra Label Print Test - 2"×1" Landscape</title>
+  <style>
+    /* ============================================
+       CRITICAL: @page size must match physical label
+       ============================================ */
+    @page { 
+      size: 50mm 25mm landscape; 
+      margin: 0; 
+    }
+    
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+    }
+    
+    html { 
+      width: 100%;
+      height: 100%;
+    }
+    
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      font-size: 10pt;
+      background: #f0f0f0;
+    }
+    
+    .test-info {
+      background: #fff;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .test-info h1 {
+      color: #e65100;
+      margin-bottom: 16px;
+    }
+    
+    .test-info ul {
+      list-style: none;
+      padding: 0;
+    }
+    
+    .test-info li {
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .test-info li:last-child {
+      border-bottom: none;
+    }
+    
+    .test-info strong {
+      display: inline-block;
+      width: 180px;
+      color: #333;
+    }
+    
+    .print-btn {
+      background: #e65100;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 16px;
+    }
+    
+    .print-btn:hover {
+      background: #d84315;
+    }
+    
+    .labels-container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    /* ============================================
+       Each label = 1 page (landscape orientation)
+       ============================================ */
+    .single-label-page {
+      width: 50mm;
+      height: 25mm;
+      padding: 2mm;
+      margin: 0 auto 20px;
+      page-break-after: always;
+      page-break-inside: avoid;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      background: white;
+      border: 2px solid #e65100;
+      position: relative;
+    }
+    
+    .single-label-page:last-child {
+      page-break-after: auto;
+      margin-bottom: 0;
+    }
+    
+    /* ============================================
+       Label content layout (landscape - side by side)
+       ============================================ */
+    .label-content {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 2mm;
+      align-items: center;
+      padding: 1mm;
+      max-width: 100%;
+      max-height: 100%;
+    }
+    
+    .label-left {
+      display: flex;
+      flex-direction: column;
+      gap: 1mm;
+      overflow: hidden;
+    }
+    
+    .label-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 1mm;
+      overflow: hidden;
+    }
+    
+    .label-name { 
+      font-size: 0.85em; 
+      font-weight: 600; 
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    .label-size { 
+      font-size: 0.7em; 
+      color: #666; 
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .label-price { 
+      font-size: 1em; 
+      font-weight: 700; 
+      color: #d32f2f; 
+    }
+    
+    .label-barcode { 
+      font-size: 0.65em; 
+      font-family: 'Courier New', monospace; 
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .label-field { 
+      font-size: 0.65em; 
+      color: #555; 
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    /* ============================================
+       Print-specific overrides
+       ============================================ */
+    @media print {
+      body {
+        padding: 0;
+        background: white;
+      }
+      
+      .test-info,
+      .labels-container {
+        background: none;
+        padding: 0;
+        margin: 0;
+        box-shadow: none;
+        border: none;
+      }
+      
+      .print-btn {
+        display: none;
+      }
+      
+      .single-label-page {
+        width: 50mm;
+        height: 25mm;
+        margin: 0;
+        padding: 2mm;
+        border: none;
+        background: white;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Test Information -->
+  <div class="test-info">
+    <h1>🧪 Zebra Label Print Test</h1>
+    <ul>
+      <li><strong>Test Purpose:</strong> Validate Zebra landscape print logic</li>
+      <li><strong>Label Size:</strong> 50mm × 25mm (2" × 1")</li>
+      <li><strong>Orientation:</strong> Landscape</li>
+      <li><strong>Total Pages:</strong> 3 (one label per page)</li>
+      <li><strong>Layout:</strong> Side-by-side (name left, price right)</li>
+    </ul>
+    
+    <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+    
+    <h2 style="margin-top: 20px; color: #333;">✅ Validation Checklist:</h2>
+    <ul style="margin-top: 10px;">
+      <li>☐ Print dialog shows custom paper size (50mm × 25mm landscape)</li>
+      <li>☐ Preview shows 3 separate pages</li>
+      <li>☐ Content layout is horizontal (not vertical)</li>
+      <li>☐ Name on left, price on right</li>
+      <li>☐ Save as PDF → Check PDF properties → Page size = 50mm × 25mm</li>
+    </ul>
+  </div>
+
+  <!-- Labels -->
+  <div class="labels-container">
+    <h2 style="margin-bottom: 20px; color: #333;">Preview (Screen Only):</h2>
+    
+    <!-- Label 1 -->
+    <div class="single-label-page">
+      <div class="label-content">
+        <div class="label-left">
+          <div class="label-name">Vodka 750ml</div>
+          <div class="label-barcode">1234567890</div>
+        </div>
+        <div class="label-right">
+          <div class="label-price">$24.99</div>
+          <div class="label-field">Absolut</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Label 2 -->
+    <div class="single-label-page">
+      <div class="label-content">
+        <div class="label-left">
+          <div class="label-name">Whiskey 1L</div>
+          <div class="label-barcode">9876543210</div>
+        </div>
+        <div class="label-right">
+          <div class="label-price">$32.50</div>
+          <div class="label-field">Jack D.</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Label 3 -->
+    <div class="single-label-page">
+      <div class="label-content">
+        <div class="label-left">
+          <div class="label-name">Beer 355ml</div>
+          <div class="label-barcode">5551234567</div>
+        </div>
+        <div class="label-right">
+          <div class="label-price">$8.99</div>
+          <div class="label-field">Corona</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.addEventListener('load', () => {
+      console.log('🧪 Zebra Print Test Loaded');
+      console.log('📄 Expected: 3 pages, 50mm × 25mm landscape each');
+      console.log('🎯 Action: Click Print button or Ctrl+P');
+      console.log('✅ Layout: Horizontal (name left, price right)');
+    });
+
+    window.addEventListener('beforeprint', () => {
+      console.log('🖨️ Print dialog opened');
+      console.log('⚙️ Ensure: Paper size = 50mm × 25mm, Orientation = Landscape');
+    });
+  </script>
+</body>
+</html>
