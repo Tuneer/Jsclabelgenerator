@@ -33,11 +33,29 @@ export class LabelTemplateService {
       showBarcode: true,
       layoutType: 'single',
       fields: ['name', 'size', 'price', 'barcode']
+    },
+    {
+      id: 'coupon',
+      name: 'Coupon Label (SAVE $X.XX)',
+      description: 'Promotional coupon with savings amount, product image, validity dates, and PLU code',
+      fontScale: 1,
+      emphasizePrice: true,
+      showBarcode: false,
+      layoutType: 'multi',
+      fields: ['brand', 'name', 'size', 'price', 'quantityWord', 'imageUrl', 'validFrom', 'validThru', 'pluCode']
     }
   ];
 
   readonly layoutConfigs: LabelLayoutConfig[] = [
     // A4 Laser Printer configurations
+    {
+      pageType: 'a4-9',
+      labelsPerRow: 3,
+      rowsPerPage: 3,
+      labelWidthMm: 60,
+      labelHeightMm: 88,
+      defaultOrientation: 'portrait'
+    },
     {
       pageType: 'a4-10',
       labelsPerRow: 2,

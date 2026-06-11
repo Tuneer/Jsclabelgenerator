@@ -29,6 +29,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
       color: '#1976d2'
     },
     {
+      title: 'Coupon Generator',
+      description: 'Generate promotional coupon sheets (3×3 grid) from Excel data with PLU, savings, and validity dates',
+      icon: 'confirmation_number',
+      route: '/coupon-generator',
+      color: '#CC0000'
+    },
+    {
       title: 'Excel Import',
       description: 'Upload and import item data from Excel files to local database',
       icon: 'upload_file',
@@ -37,7 +44,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     },
     {
       title: 'Excel Management',
-      description: 'View, manage, and select uploaded Excel files for label generation',
+      description: 'View, manage, and select active Excel files for label and coupon generation',
       icon: 'folder_open',
       route: '/excel-management',
       color: '#f57c00'

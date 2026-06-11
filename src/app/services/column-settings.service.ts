@@ -14,6 +14,13 @@ export class ColumnSettingsService {
     { key: 'size', label: 'Size', showInTable: true, showInPrint: true, order: 6 },
     { key: 'barcode', label: 'Barcode', showInTable: true, showInPrint: true, order: 7 },
     { key: 'sku', label: 'SKU', showInTable: true, showInPrint: false, order: 8 },
+    // Coupon-specific fields
+    { key: 'quantityWord', label: 'Quantity Word', showInTable: false, showInPrint: true, order: 9 },
+    { key: 'imageUrl', label: 'Product Image', showInTable: false, showInPrint: true, order: 10 },
+    { key: 'validFrom', label: 'Valid From', showInTable: false, showInPrint: true, order: 11 },
+    { key: 'validThru', label: 'Valid Thru', showInTable: false, showInPrint: true, order: 12 },
+    { key: 'pluCode', label: 'PLU Code', showInTable: false, showInPrint: true, order: 13 },
+    { key: 'savingsAmount', label: 'Savings Amount', showInTable: false, showInPrint: true, order: 14 },
   ];
 
   constructor() {}

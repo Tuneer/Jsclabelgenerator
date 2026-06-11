@@ -1,9 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ExcelImportComponent } from '../../components/excel-import/excel-import.component';
 import { HttpClient } from '@angular/common/http';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   standalone: true,
@@ -16,8 +18,19 @@ export class ExcelImportPageComponent implements OnInit, OnDestroy {
   currentDateTime: string = '';
   ipAddress: string = 'Loading...';
   private dateTimeInterval: any;
+  isAdmin = false;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService,
+    private router: Router
+  ) {
+    // Check if user is admin
+    if (!this.authService.isAdmin()) {
+      this.router.navigate(['/']);
+    }
+    this.isAdmin = this.authService.isAdmin();
+  }
 
   ngOnInit(): void {
     this.updateDateTime();

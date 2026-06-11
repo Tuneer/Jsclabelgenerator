@@ -32,6 +32,15 @@
       <span class="app-title">JSC Label Generator</span>
       <span class="spacer"></span>
       
+      <!-- User Info & Logout -->
+      <div class="user-section" *ngIf="currentUser">
+        <mat-icon class="user-icon">person</mat-icon>
+        <span class="user-name">{{ currentUser.displayName }}</span>
+        <button mat-icon-button (click)="onLogout()" matTooltip="Logout">
+          <mat-icon>logout</mat-icon>
+        </button>
+      </div>
+      
       <!-- Desktop Navigation -->
       <nav class="nav-links">
         <a mat-button 

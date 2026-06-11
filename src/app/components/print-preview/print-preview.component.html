@@ -26,7 +26,7 @@
     </div>
 
     <!-- Single Label Mode: Each item on separate page -->
-    <div *ngIf="isSingleLabel" class="single-label-container">
+    <div *ngIf="isSingleLabel && template?.id !== 'coupon' && pageType !== 'a4-9'" class="single-label-container">
       <div class="single-label-page" *ngFor="let slot of labelSlots; let i = index">
         <div class="label-content" [style.font-size.rem]="template.fontScale">
           <div class="label-name" *ngIf="shouldShowField('name')">{{ getFieldValue(slot.item, 'name') }}</div>
@@ -56,8 +56,8 @@
       </div>
     </div>
 
-    <!-- Grid Mode: Fixed layout with A4 dimensions -->
-    <div *ngIf="!isSingleLabel" class="a4-page-container">
+    <!-- Grid Mode: Fixed layout with A4 dimensions (non-coupon) -->
+    <div *ngIf="!isSingleLabel && template?.id !== 'coupon' && pageType !== 'a4-9'" class="a4-page-container">
       <div class="a4-page" [ngClass]="pageType">
         <div class="label-grid" [ngClass]="pageType">
           <!-- Iterate through ALL slots (filled + empty) -->
@@ -95,6 +95,54 @@
             </div>
             
             <!-- Empty slot placeholder (visible in preview, hidden in print) -->
+            <div *ngIf="slot.isEmpty" class="empty-label-placeholder no-print">
+              <span>Empty</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Coupon Mode: 3×3 grid with coupon design - Multi-page support -->
+    <div *ngIf="template?.id === 'coupon' || pageType === 'a4-9'" class="coupon-preview-container">
+      <!-- Render all pages -->
+      <div class="coupon-page" *ngFor="let page of pages; let pageIdx = index">
+        <div class="coupon-grid">
+          <div 
+            class="coupon-slot"
+            *ngFor="let slot of page; let i = index"
+            [class.empty]="slot.isEmpty"
+            [class.filled]="!slot.isEmpty">
+            
+            <!-- Coupon content for filled slots -->
+            <ng-container *ngIf="!slot.isEmpty">
+              <!-- Header: Large bold "SAVE $X.XX INSTANTLY" -->
+              <div class="coupon-header">
+                SAVE {{ (slot.item.savingsAmount || slot.item.price || 0) | currency }}<br/>
+                INSTANTLY
+              </div>
+              
+              <!-- Body: Product details and image -->
+              <div class="coupon-body">
+                <div class="coupon-eligibility">
+                  on a purchase of<br/>
+                  <strong class="coupon-one">{{ slot.item.quantityWord || 'ONE' }}</strong> {{ slot.item.size }} of
+                </div>
+                <div class="coupon-product-name">
+                  <strong>{{ slot.item.brand }}</strong> {{ slot.item.name }}
+                </div>
+                <div class="coupon-image-wrap" *ngIf="slot.item.imageUrl">
+                  <img [src]="slot.item.imageUrl" class="coupon-product-img" alt="Product" crossorigin="anonymous" />
+                </div>
+              </div>
+              
+              <!-- Footer: Dark blue bar with dates and PLU -->
+              <div class="coupon-footer">
+                <span class="coupon-footer-text">Valid {{ formatDateNoYear(slot.item.validFrom) }} thru {{ slot.item.validThru }}. PLU# {{ slot.item.pluCode || slot.item.sku || slot.item.barcode }}</span>
+              </div>
+            </ng-container>
+            
+            <!-- Empty slot placeholder -->
             <div *ngIf="slot.isEmpty" class="empty-label-placeholder no-print">
               <span>Empty</span>
             </div>

@@ -1,0 +1,68 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <div class="logo-section">
+        <mat-icon class="logo-icon">local_printshop</mat-icon>
+        <h1>JSC Label Generator</h1>
+      </div>
+      <p class="subtitle">Sign in to continue</p>
+    </div>
+
+    <form (ngSubmit)="onLogin()" class="login-form">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Username</mat-label>
+        <input 
+          matInput 
+          [(ngModel)]="username" 
+          name="username"
+          placeholder="Enter your username"
+          autocomplete="username"
+          required>
+        <mat-icon matPrefix>person</mat-icon>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Password</mat-label>
+        <input 
+          matInput 
+          [(ngModel)]="password" 
+          name="password"
+          [type]="hidePassword ? 'password' : 'text'"
+          placeholder="Enter your password"
+          autocomplete="current-password"
+          required>
+        <mat-icon matPrefix>lock</mat-icon>
+        <button 
+          mat-icon-button 
+          matSuffix 
+          type="button"
+          (click)="hidePassword = !hidePassword">
+          <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+      </mat-form-field>
+
+      <div class="error-message" *ngIf="errorMessage">
+        <mat-icon>error</mat-icon>
+        <span>{{ errorMessage }}</span>
+      </div>
+
+      <button 
+        mat-raised-button 
+        color="primary" 
+        type="submit"
+        [disabled]="loading || !username || !password"
+        class="login-btn">
+        <mat-spinner *ngIf="loading" diameter="20" class="btn-spinner"></mat-spinner>
+        <span *ngIf="!loading">Sign In</span>
+        <span *ngIf="loading">Signing in...</span>
+      </button>
+    </form>
+
+    <div class="login-footer">
+      <p class="hint-text">
+        <mat-icon>info</mat-icon>
+        Default credentials: admin / admin123
+      </p>
+    </div>
+  </div>
+</div>

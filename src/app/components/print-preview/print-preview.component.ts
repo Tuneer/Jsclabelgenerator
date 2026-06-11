@@ -35,6 +35,10 @@ export class PrintPreviewComponent implements OnInit, OnChanges {
   labelSlots: any[] = []; // Array including both filled and empty slots
   isSingleLabel: boolean = false;
   
+  // Multi-page support
+  pages: any[][] = []; // Array of pages, each page is an array of slots
+  totalPages: number = 1;
+  
   // Expose Math to template
   Math = Math;
 
@@ -68,11 +72,21 @@ export class PrintPreviewComponent implements OnInit, OnChanges {
       this.isSingleLabel = true;
       this.totalSlots = items.length;
       this.labelSlots = items.map(item => ({ item, isEmpty: false }));
+      this.pages = [this.labelSlots];
+      this.totalPages = 1;
       return;
     }
     
-    // A4 Grid layouts
+    // For grid layouts, create array with items + empty slots
+    this.labelSlots = [];
+    this.pages = [];
+    
+    // Determine total slots based on page type
     switch (this.pageType) {
+      case 'a4-9':
+        this.isSingleLabel = false;
+        this.totalSlots = 9;
+        break;
       case 'a4-10':
         this.isSingleLabel = false;
         this.totalSlots = 10;
@@ -90,36 +104,61 @@ export class PrintPreviewComponent implements OnInit, OnChanges {
         this.totalSlots = 10;
     }
     
-    // For grid layouts, create array with items + empty slots
-    this.labelSlots = [];
-    
     // Single item replication on A4 (fill all slots with same item)
     if (items.length === 1 && this.pageType.startsWith('a4-')) {
       console.log('🔄 Single item replication mode on A4');
+      const singlePage = [];
       for (let i = 0; i < this.totalSlots; i++) {
-        this.labelSlots.push({ item: items[0], isEmpty: false });
+        singlePage.push({ item: items[0], isEmpty: false });
       }
+      this.labelSlots = singlePage;
+      // Duplicate page for each copy
+      for (let copy = 0; copy < this.copies; copy++) {
+        this.pages.push([...singlePage]);
+      }
+      this.totalPages = this.pages.length;
     } else {
-      // Normal mode: Fill with actual items, rest empty
-      const itemsForFirstPage = Math.min(items.length, this.totalSlots);
+      // Normal mode: Multiple pages if needed
+      const basePagesCount = Math.ceil(items.length / this.totalSlots);
+      this.totalPages = basePagesCount * this.copies;
       
-      for (let i = 0; i < this.totalSlots; i++) {
-        if (i < itemsForFirstPage) {
-          this.labelSlots.push({ item: items[i], isEmpty: false });
-        } else {
-          this.labelSlots.push({ item: null, isEmpty: true });
+      // Generate base pages
+      for (let pageIndex = 0; pageIndex < basePagesCount; pageIndex++) {
+        const pageSlots = [];
+        const startIdx = pageIndex * this.totalSlots;
+        const endIdx = Math.min(startIdx + this.totalSlots, items.length);
+        
+        // Fill slots for this page
+        for (let slotIdx = 0; slotIdx < this.totalSlots; slotIdx++) {
+          const itemIdx = startIdx + slotIdx;
+          if (itemIdx < items.length) {
+            pageSlots.push({ item: items[itemIdx], isEmpty: false });
+          } else {
+            pageSlots.push({ item: null, isEmpty: true });
+          }
+        }
+        
+        this.pages.push(pageSlots);
+      }
+      
+      // Duplicate all pages for each copy
+      if (this.copies > 1) {
+        const basePages = [...this.pages];
+        for (let copy = 1; copy < this.copies; copy++) {
+          basePages.forEach(page => this.pages.push([...page]));
         }
       }
+      
+      // First page slots for backward compatibility
+      this.labelSlots = this.pages[0] || [];
     }
-    
-    const totalPages = this.isSingleLabel ? items.length : Math.ceil(items.length / this.totalSlots);
     
     console.log(`🏷️ Print Preview Setup:`);
     console.log(`   Page Type: ${this.pageType}`);
     console.log(`   Total Slots per Page: ${this.totalSlots}`);
     console.log(`   Items: ${items.length}`);
     console.log(`   Copies: ${this.copies}`);
-    console.log(`   Total Pages: ${totalPages * this.copies}`);
+    console.log(`   Total Pages: ${this.totalPages}`);
     console.log(`   Template: ${this.template?.name || 'default'}`);
   }
   
@@ -142,6 +181,7 @@ export class PrintPreviewComponent implements OnInit, OnChanges {
 
   getPageTypeLabel(): string {
     const labels: Record<string, string> = {
+      'a4-9': '9 Coupons/Page (3×3 grid)',
       'a4-10': '10 Labels/Page',
       'a4-16': '16 Labels/Page',
       'a4-36': '36 Labels/Page',
@@ -251,102 +291,93 @@ ${printerType === 'Brother QL' ? `
   }
 
   print(): void {
-    // Create isolated print window
-    const printWindow = window.open('', 'Print Labels', 'width=900,height=900');
-    
-    if (!printWindow) {
-      alert('Please allow popups for this site to print labels.');
+    // Generate the HTML content for printing
+    const printContent = this.generatePrintHTML();
+    const items = this.getDisplayItems();
+
+    // For coupon mode, use browser's native print dialog for better fidelity
+    if (this.isCouponMode()) {
+      const printWindow = window.open('', 'Print Coupons', 'width=1200,height=900');
+      
+      if (!printWindow) {
+        alert('Please allow popups for this site to print coupons.');
+        return;
+      }
+
+      // Write content to new window
+      printWindow.document.open();
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      
+      // Wait for content and images to load, then print
+      printWindow.onload = () => {
+        // Give images extra time to render
+        setTimeout(() => {
+          printWindow.focus();
+          printWindow.print();
+          // Close window after print dialog is dismissed
+          printWindow.onafterprint = () => {
+            printWindow.close();
+          };
+        }, 500);
+      };
+      
+      this.printed.emit();
       return;
     }
 
-    // Generate the HTML content for printing
-    const printContent = this.generatePrintHTML();
- const items = this.getDisplayItems();
-
+    // For single label mode (Brother QL, Zebra), use jsPDF approach
     const labelSize = this.isSingleLabel
-    ? this.getLabelDimensions()
-    : { width: '210mm', height: '297mm', orientation: 'portrait' };
+      ? this.getLabelDimensions()
+      : { width: '210mm', height: '297mm', orientation: 'portrait' };
 
-  const widthMm = parseFloat(labelSize.width);
-  const heightMm = parseFloat(labelSize.height);
+    const widthMm = parseFloat(labelSize.width);
+    const heightMm = parseFloat(labelSize.height);
 
-  const pxPerMm = 96 / 25.4;
-  const iframeWidthPx = Math.ceil(widthMm * pxPerMm);
-  const iframeHeightPx = Math.ceil(heightMm * pxPerMm);
+    const pxPerMm = 96 / 25.4;
+    const iframeWidthPx = Math.ceil(widthMm * pxPerMm);
+    const iframeHeightPx = Math.ceil(heightMm * pxPerMm);
 
     // Create hidden iframe
-  const iframe = document.createElement('iframe');
-  iframe.style.position = 'fixed';
-  iframe.style.right = '0';
-  iframe.style.bottom = '0';
-  iframe.style.width = `${iframeWidthPx}px`;
-  iframe.style.height = `${iframeHeightPx}px`;
-  iframe.style.border = '0';
-  document.body.appendChild(iframe);
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = `${iframeWidthPx}px`;
+    iframe.style.height = `${iframeHeightPx}px`;
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
 
-  const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-  if (!iframeDoc) return;
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!iframeDoc) return;
 
-  iframeDoc.open();
-  iframeDoc.write(printContent);
-  iframeDoc.close();
+    iframeDoc.open();
+    iframeDoc.write(printContent);
+    iframeDoc.close();
 
-  iframe.onload = async () => {
-  
-    const pxPerMm = 96 / 25.4;
-  const iframeWidthPx = Math.ceil(widthMm * pxPerMm);
-  const iframeHeightPx = Math.ceil(heightMm * pxPerMm);
+    iframe.onload = async () => {
+      const pdf = new jsPDF({
+        orientation: labelSize.orientation as "portrait" | "landscape",
+        unit: 'px',
+        format: [iframeWidthPx, iframeHeightPx]
+      });
 
-    const pdf = new jsPDF({
-      orientation: labelSize.orientation as "portrait"|"landscape",
-      unit: 'px',
-      format: [iframeWidthPx, iframeHeightPx]
-    });
+      // Render HTML content to PDF
+      await pdf.html(iframeDoc.body, {
+        autoPaging: false,
+        html2canvas: {
+          scale: 2,
+          useCORS: true
+        }
+      });
 
-    items.forEach((item, index) => {
-  if (index > 0) pdf.addPage();
-  this.drawLabel(pdf, item);
-});
+      document.body.removeChild(iframe);
 
-
-    await pdf.html(iframeDoc.body, {
-      autoPaging: false,
-      html2canvas: {
-        scale: 1,
-        useCORS: true
-      }
-    });
-
-    document.body.removeChild(iframe);
-
-    // Show PDF instead of direct print
-    window.open(pdf.output('bloburl'), '_blank');
-    
-
-    this.printed.emit();
-  };
-
-
-    
-    // // Write content to new window
-    // printWindow.document.open();
-    // printWindow.document.write(printContent);
-    // printWindow.document.close();
-    
-    // // Wait for content to load, then print
-    // printWindow.onload = () => {
-    //   printWindow.focus();
-    //    //printWindow.print();
-    //     // Close window after print dialog is dismissed
-    //     printWindow.onafterprint = () => {
-    //       printWindow.close();
-    //     };
-    //   setTimeout(() => {
-       
-    //   }, 250);
-    // };
-    
-   // this.printed.emit();
+      // Show PDF instead of direct print
+      window.open(pdf.output('bloburl'), '_blank');
+      
+      this.printed.emit();
+    };
   }
 
 
@@ -373,10 +404,22 @@ ${printerType === 'Brother QL' ? `
 
 
   /**
+   * Check if current template is coupon mode
+   */
+  private isCouponMode(): boolean {
+    return this.template?.id === 'coupon' || this.pageType === 'a4-9';
+  }
+
+  /**
    * Generate complete HTML document for printing
    */
   private generatePrintHTML(): string {
     const items = this.getDisplayItems();
+    
+    // Coupon mode uses its own dedicated layout
+    if (this.isCouponMode()) {
+      return this.generateCouponHTML(items);
+    }
     
     if (this.isSingleLabel) {
       return this.generateSingleLabelHTML(items);
@@ -847,10 +890,319 @@ ${printerType === 'Brother QL' ? `
   }
 
   /**
+   * Generate HTML for coupon label layout (3×3 grid on A4)
+   * Each coupon has: beige bg, red header, product image, dark blue footer with dates + PLU
+   * Design matches reference: serif font for header, clean layout, full-width footer bar
+   */
+  private generateCouponHTML(items: any[]): string {
+    const copies = this.copies || 1;
+    const totalSlots = 9; // 3×3 grid
+    
+    // Build pages: single item replicates, multiple items fill grid
+    let allPages: any[][] = [];
+    
+    if (items.length === 1) {
+      const singlePage = [];
+      for (let i = 0; i < totalSlots; i++) {
+        singlePage.push({ item: items[0], isEmpty: false });
+      }
+      for (let copy = 0; copy < copies; copy++) {
+        allPages.push([...singlePage]);
+      }
+    } else {
+      const totalPages = Math.ceil(items.length / totalSlots);
+      const basePages: any[][] = [];
+      for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
+        const pageSlots = [];
+        const startIdx = pageIndex * totalSlots;
+        for (let slotIdx = 0; slotIdx < totalSlots; slotIdx++) {
+          const itemIdx = startIdx + slotIdx;
+          if (itemIdx < items.length) {
+            pageSlots.push({ item: items[itemIdx], isEmpty: false });
+          } else {
+            pageSlots.push({ item: null, isEmpty: true });
+          }
+        }
+        basePages.push(pageSlots);
+      }
+      for (let copy = 0; copy < copies; copy++) {
+        basePages.forEach(page => allPages.push([...page]));
+      }
+    }
+    
+    // Generate coupon HTML for each page
+    const pagesHTML = allPages.map((pageSlots, pageIdx) => {
+      const couponSlotsHTML = pageSlots.map(slot => {
+        if (slot.isEmpty) {
+          return '<div class="coupon-slot empty"></div>';
+        }
+        
+        const item = slot.item;
+        const savingsAmt = item.savingsAmount || item.price || 0;
+        const savingsFormatted = `$${Number(savingsAmt).toFixed(2)}`;
+        const quantityWord = item.quantityWord || 'ONE';
+        const productName = item.name || '';
+        const brandName = item.brand || '';
+        const packSize = item.size || '';
+        const imageUrl = item.imageUrl || '';
+        const validFrom = item.validFrom || '';
+        const validThru = item.validThru || '';
+        const pluCode = item.pluCode || item.sku || item.barcode || '';
+        
+        const imageHTML = imageUrl 
+          ? `<img src="${imageUrl}" class="coupon-product-img" alt="Product" crossorigin="anonymous" />`
+          : '';
+        
+        // Format footer: "Valid June 1 thru June 30, 2025. PLU# 76764" (single line)
+        let footerText = '';
+        if (validFrom && validThru) {
+          const fromNoYear = validFrom.replace(/,\s*\d{4}$/, '');
+          footerText = `Valid ${fromNoYear} thru ${validThru}. PLU# ${pluCode}`;
+        } else if (validFrom) {
+          footerText = `Valid ${validFrom}. PLU# ${pluCode}`;
+        } else if (validThru) {
+          footerText = `Valid thru ${validThru}. PLU# ${pluCode}`;
+        } else {
+          footerText = `PLU# ${pluCode}`;
+        }
+        
+        // Only render image wrapper if image exists
+        const imageSection = imageHTML 
+          ? `<div class="coupon-image-wrap">${imageHTML}</div>`
+          : '';
+        
+        return `
+          <div class="coupon-slot filled">
+            <div class="coupon-header">
+              <span class="save-text">SAVE</span> ${savingsFormatted} <span class="save-text">INSTANTLY</span>
+            </div>
+            <div class="coupon-body">
+              <div class="coupon-text">
+                on a purchase of <strong>${quantityWord}</strong> ${packSize} of
+              </div>
+              <div class="coupon-brand-product">
+                <strong>${brandName}</strong> ${productName}
+              </div>
+              ${imageSection}
+            </div>
+            <div class="coupon-footer">
+              <span class="coupon-footer-text">${footerText}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      return `
+        <div class="coupon-page">
+          <div class="coupon-grid">
+            ${couponSlotsHTML}
+          </div>
+        </div>
+      `;
+    }).join('');
+    
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Coupon Sheet - ${allPages.length} page(s) - 9 coupons/page</title>
+          <style>
+            @page { 
+              size: A4 portrait; 
+              margin: 0; 
+            }
+            
+            * { 
+              box-sizing: border-box; 
+              margin: 0; 
+              padding: 0; 
+              print-color-adjust: exact; 
+              -webkit-print-color-adjust: exact; 
+            }
+            
+            body {
+              margin: 0;
+              padding: 0;
+              font-family: Arial, Helvetica, sans-serif;
+              background: white;
+            }
+            
+            .coupon-page {
+              width: 210mm;
+              height: 297mm;
+              padding: 6mm 5mm;
+              page-break-after: always;
+              page-break-inside: avoid;
+              box-sizing: border-box;
+              background: white;
+            }
+            
+            .coupon-page:last-child {
+              page-break-after: auto;
+            }
+            
+            .coupon-grid {
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              grid-template-rows: repeat(3, 1fr);
+              gap: 3mm;
+              width: 100%;
+              height: 100%;
+            }
+            
+            .coupon-slot {
+              background: #F5F0D8;
+              border: 0.5pt solid #bbb;
+              border-radius: 2px;
+              display: flex;
+              flex-direction: column;
+              overflow: hidden;
+              position: relative;
+            }
+            
+            .coupon-slot.empty {
+              visibility: hidden;
+              background: transparent;
+              border: 0.5pt dashed #ccc;
+            }
+            
+            /* HEADER: Bold red "SAVE $X.XX INSTANTLY" - serif font, large */
+            .coupon-header {
+              background: #F5F0D8;
+              text-align: center;
+              font-family: Georgia, 'Times New Roman', serif;
+              font-size: 13pt;
+              font-weight: 900;
+              color: #CC0000;
+              padding: 6px 4px 4px;
+              text-transform: uppercase;
+              letter-spacing: 0.3px;
+              line-height: 1.15;
+            }
+            
+            .coupon-header .save-text {
+              text-shadow: 1px 1px 0 rgba(0,0,0,0.1);
+            }
+            
+            /* BODY: Eligibility text + product image */
+            .coupon-body {
+              flex: 1;
+              padding: 3px 8px;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              text-align: center;
+              gap: 2px;
+              justify-content: center;
+            }
+            
+            .coupon-text {
+              font-size: 8pt;
+              color: #222;
+              line-height: 1.25;
+            }
+            
+            .coupon-text strong {
+              text-decoration: underline;
+              font-weight: 800;
+            }
+            
+            .coupon-brand-product {
+              font-size: 8pt;
+              color: #222;
+              font-weight: 500;
+              line-height: 1.25;
+            }
+            
+            .coupon-brand-product strong {
+              font-weight: 800;
+            }
+            
+            .coupon-image-wrap {
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              margin-top: 3px;
+              flex: 1;
+              min-height: 30px;
+              max-height: 55%;
+              overflow: hidden;
+            }
+            
+            .coupon-no-image {
+              min-height: 0;
+              flex: 0;
+            }
+            
+            .coupon-product-img {
+              max-width: 90%;
+              max-height: 65px;
+              object-fit: contain;
+              display: block;
+            }
+            
+            /* FOOTER: Full-width dark blue bar with dates + PLU on one line */
+            .coupon-footer {
+              background: #1A2B5C;
+              color: white;
+              padding: 4px 8px;
+              font-size: 7pt;
+              font-weight: 600;
+              letter-spacing: 0.2px;
+              min-height: 18px;
+              line-height: 1.3;
+            }
+            
+            .coupon-footer-text {
+              display: block;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+            
+            @media print {
+              .coupon-page {
+                margin: 0;
+                padding: 6mm 5mm;
+                background: white;
+              }
+              
+              .coupon-slot {
+                border: 0.5pt solid #bbb;
+              }
+              
+              .coupon-slot.empty {
+                border: none;
+                visibility: hidden;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          ${pagesHTML}
+        </body>
+      </html>
+    `;
+  }
+
+  /**
    * Get grid configuration based on page type
    */
   private getGridConfig() {
     switch (this.pageType) {
+      case 'a4-9':
+        return {
+          gridTemplate: 'grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr);',
+          gap: '4mm',
+          padding: '6px',
+          nameSize: '1.0em',
+          textSize: '0.9em',
+          priceSize: '1.1em',
+          barcodeSize: '0.85em',
+          fieldSize: '0.8em'
+        };
       case 'a4-10':
         return {
           gridTemplate: 'grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(5, 1fr);',
@@ -942,5 +1294,16 @@ ${printerType === 'Brother QL' ? `
         orientation: finalOrientation
       };
     }
+  }
+
+  /**
+   * Strip year from date string for coupon footer formatting.
+   * "June 1, 2025" → "June 1"
+   * "6/1/2025" → "6/1"
+   */
+  formatDateNoYear(dateStr: string): string {
+    if (!dateStr) return '';
+    // Remove trailing ", YYYY" pattern
+    return dateStr.replace(/,\s*\d{4}$/, '');
   }
 }

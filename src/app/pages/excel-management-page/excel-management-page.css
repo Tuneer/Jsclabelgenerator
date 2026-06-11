@@ -141,6 +141,68 @@
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
 }
 
+/* Active file highlight - separate for Labels and Coupons */
+.excel-card.coupon-file {
+  border: 2px solid #f57c00;
+  background: linear-gradient(135deg, #fff8e1 0%, #ffffff 100%);
+  box-shadow: 0 2px 16px rgba(245, 124, 0, 0.15) !important;
+}
+
+.excel-card.label-file {
+  border: 2px solid #5c6bc0;
+  background: linear-gradient(135deg, #e8eaf6 0%, #ffffff 100%);
+  box-shadow: 0 2px 16px rgba(92, 107, 192, 0.15) !important;
+}
+
+.excel-card.coupon-file:hover {
+  box-shadow: 0 4px 20px rgba(245, 124, 0, 0.25) !important;
+}
+
+.excel-card.label-file:hover {
+  box-shadow: 0 4px 20px rgba(92, 107, 192, 0.25) !important;
+}
+
+/* File-level active badges */
+.file-active-badge {
+  display: inline-block;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  vertical-align: middle;
+  margin-left: 8px;
+}
+
+.file-active-badge.coupon-badge {
+  background: #f57c00;
+}
+
+.file-active-badge.label-badge {
+  background: #5c6bc0;
+}
+
+/* File-level set active buttons */
+.file-active-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.set-active-file-btn {
+  font-size: 12px;
+  height: 36px;
+  min-width: 110px;
+}
+
+.set-active-file-btn mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  margin-right: 4px;
+}
+
 .clickable-header {
   cursor: pointer;
   user-select: none;
@@ -239,6 +301,18 @@
   position: relative;
 }
 
+.sheet-card.coupon-active {
+  border-color: #f57c00;
+  background: linear-gradient(135deg, #fff8e1 0%, #ffffff 100%);
+  box-shadow: 0 2px 12px rgba(245, 124, 0, 0.15) !important;
+}
+
+.sheet-card.label-active {
+  border-color: #5c6bc0;
+  background: linear-gradient(135deg, #e8eaf6 0%, #ffffff 100%);
+  box-shadow: 0 2px 12px rgba(92, 107, 192, 0.15) !important;
+}
+
 .sheet-card:hover {
   border-color: #1976d2;
   box-shadow: 0 4px 12px rgba(25, 118, 210, 0.2) !important;
@@ -312,9 +386,129 @@
 
 .sheet-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   padding-top: 8px;
   border-top: 1px solid #e0e0e0;
+}
+
+.set-active-btn {
+  font-size: 12px;
+  height: 36px;
+}
+
+.set-active-btn mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+/* Active Badges */
+.active-badge {
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-left: auto;
+}
+
+.active-badge.coupon-badge {
+  background: #f57c00;
+}
+
+.active-badge.label-badge {
+  background: #5c6bc0;
+}
+
+/* Active Status Row (two cards side by side) */
+.active-status-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+/* Active Excel Status Cards */
+.active-excel-card {
+  margin-bottom: 0;
+}
+
+.active-excel-card.label-card {
+  border: 2px solid #5c6bc0;
+  background: linear-gradient(135deg, #e8eaf6 0%, #ffffff 100%);
+}
+
+.active-excel-card.coupon-card {
+  border: 2px solid #f57c00;
+  background: linear-gradient(135deg, #fff3e0 0%, #ffffff 100%);
+}
+
+.active-excel-card .mat-mdc-card-content {
+  padding: 16px 20px !important;
+}
+
+.active-excel-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.active-excel-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.active-excel-icon {
+  font-size: 40px;
+  width: 40px;
+  height: 40px;
+  color: #f57c00;
+}
+
+.active-excel-icon.label-icon {
+  color: #5c6bc0;
+}
+
+.active-excel-icon.coupon-icon {
+  color: #f57c00;
+}
+
+.active-excel-info h3 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+}
+
+.active-excel-name {
+  margin: 0;
+  font-size: 14px;
+  color: #1976d2;
+  font-weight: 500;
+}
+
+.active-excel-name code {
+  background: #f5f5f5;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #666;
+  margin-left: 8px;
+}
+
+.active-excel-none {
+  margin: 0;
+  font-size: 14px;
+  color: #999;
+}
+
+.active-excel-none strong {
+  color: #f57c00;
 }
 
 /* Sheet Data Section */
@@ -413,6 +607,10 @@
     grid-template-columns: 1fr;
   }
 
+  .active-status-row {
+    grid-template-columns: 1fr;
+  }
+
   .sheets-grid {
     grid-template-columns: 1fr;
   }
@@ -426,5 +624,15 @@
   .excel-stats {
     width: 100%;
     justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .file-active-btns {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .set-active-file-btn {
+    width: 100%;
   }
 }

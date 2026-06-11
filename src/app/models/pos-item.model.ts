@@ -12,6 +12,13 @@ export interface PosItem {
   supplier?: string;         // Supplier name
   distributor?: string;      // Distributor name
   lastUpdated: string;       // ISO timestamp
+  // Coupon-specific fields
+  quantityWord?: string;     // e.g., "ONE", "TWO", "THREE"
+  imageUrl?: string;         // Product image URL for coupon
+  validFrom?: string;        // Coupon validity start date (ISO or formatted)
+  validThru?: string;        // Coupon validity end date (ISO or formatted)
+  pluCode?: string;          // PLU code for coupon
+  savingsAmount?: number;    // Savings amount (overrides price for coupons)
   [key: string]: any;        // Dynamic fields from Excel
 }
 

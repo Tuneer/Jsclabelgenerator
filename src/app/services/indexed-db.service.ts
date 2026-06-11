@@ -4,24 +4,36 @@ import { PosItem } from '../models/pos-item.model';
 @Injectable({ providedIn: 'root' })
 export class IndexedDBService {
   private dbName = 'LabelGeneratorDB';
-  private version = 2; // Incremented for schema changes
+  private version = 3; // Incremented for activeExcel store
   private db: IDBDatabase | null = null;
 
   async init(): Promise<void> {
+    console.log('🔧 [IndexedDB] init() called, db =', this.db ? 'EXISTS' : 'NULL');
+    if (this.db) {
+      console.log('🔧 [IndexedDB] Already initialized, skipping');
+      return;
+    }
     return new Promise((resolve, reject) => {
+      console.log('🔧 [IndexedDB] Opening database:', this.dbName, 'version:', this.version);
       const request = indexedDB.open(this.dbName, this.version);
 
-      request.onerror = () => reject(request.error);
+      request.onerror = () => {
+        console.error('❌ [IndexedDB] Failed to open:', request.error);
+        reject(request.error);
+      };
       request.onsuccess = () => {
         this.db = request.result;
-        console.log('✅ IndexedDB initialized');
+        console.log('✅ [IndexedDB] init() SUCCESS - database opened');
         resolve();
+      };
+      request.onblocked = () => {
+        console.warn('⚠️ [IndexedDB] Database open BLOCKED by another connection');
       };
 
       request.onupgradeneeded = (event: any) => {
+        console.log('🔧 [IndexedDB] onupgradeneeded fired');
         const db = event.target.result;
         
-        // Legacy stores
         if (!db.objectStoreNames.contains('posItems')) {
           db.createObjectStore('posItems', { keyPath: 'id' });
           console.log('📦 Created posItems object store');
@@ -32,17 +44,21 @@ export class IndexedDBService {
           console.log('📦 Created printedItems object store');
         }
 
-        // Multi-sheet support: sheets metadata
         if (!db.objectStoreNames.contains('sheets')) {
           db.createObjectStore('sheets', { keyPath: 'tableName' });
           console.log('📦 Created sheets object store');
         }
 
-        // Multi-sheet support: sheet data (dynamic stores created at runtime)
         if (!db.objectStoreNames.contains('sheetData')) {
           db.createObjectStore('sheetData', { keyPath: ['tableName', 'rowId'], autoIncrement: false });
           console.log('📦 Created sheetData object store');
         }
+
+        if (!db.objectStoreNames.contains('settings')) {
+          db.createObjectStore('settings', { keyPath: 'key' });
+          console.log('📦 Created settings object store');
+        }
+        console.log('🔧 [IndexedDB] onupgradeneeded complete');
       };
     });
   }
@@ -227,6 +243,98 @@ export class IndexedDBService {
       
       transaction.oncomplete = () => {
         console.log(`✅ Deleted sheet: ${tableName}`);
+        resolve();
+      };
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  // ===== Active Excel Selection =====
+  // Two independent settings:
+  //  - activeLabelExcel:  Used by Label Generator (merchant item master)
+  //  - activeCouponExcel: Used by Coupon Generator (coupon programs)
+
+  /**
+   * Set the active Excel sheet for a specific purpose.
+   * @param tableName The sheet tableName
+   * @param purpose 'label' or 'coupon'
+   */
+  async setActiveExcel(tableName: string, purpose: 'label' | 'coupon' = 'coupon'): Promise<void> {
+    if (!this.db) await this.init();
+
+    const key = purpose === 'label' ? 'activeLabelExcel' : 'activeCouponExcel';
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction(['settings'], 'readwrite');
+      const store = transaction.objectStore('settings');
+      store.put({ key, value: tableName });
+
+      transaction.oncomplete = () => {
+        console.log(`✅ Active Excel (${purpose}) set to: ${tableName}`);
+        resolve();
+      };
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  /**
+   * Get the active Excel sheet tableName for a specific purpose.
+   * @param purpose 'label' or 'coupon'
+   * Returns null if no active Excel is set.
+   */
+  async getActiveExcel(purpose: 'label' | 'coupon' = 'coupon'): Promise<string | null> {
+    console.log('🔍 [IndexedDB] getActiveExcel("' + purpose + '") called, db =', this.db ? 'EXISTS' : 'NULL');
+    if (!this.db) {
+      console.log('🔍 [IndexedDB] getActiveExcel: calling init()...');
+      await this.init();
+      console.log('🔍 [IndexedDB] getActiveExcel: init() done, db =', this.db ? 'EXISTS' : 'NULL');
+    }
+
+    const key = purpose === 'label' ? 'activeLabelExcel' : 'activeCouponExcel';
+    console.log('🔍 [IndexedDB] getActiveExcel: reading key "' + key + '" from settings store');
+
+    return new Promise((resolve, reject) => {
+      try {
+        const transaction = this.db!.transaction(['settings'], 'readonly');
+        const store = transaction.objectStore('settings');
+        const request = store.get(key);
+
+        request.onsuccess = () => {
+          const result = request.result;
+          console.log('✅ [IndexedDB] getActiveExcel: got result:', result ? result.value : 'NULL');
+          resolve(result ? result.value : null);
+        };
+        request.onerror = () => {
+          console.error('❌ [IndexedDB] getActiveExcel: request error:', request.error);
+          reject(request.error);
+        };
+        
+        transaction.onerror = () => {
+          console.error('❌ [IndexedDB] getActiveExcel: transaction error:', transaction.error);
+        };
+      } catch (err) {
+        console.error('❌ [IndexedDB] getActiveExcel: exception:', err);
+        reject(err);
+      }
+    });
+  }
+
+  /**
+   * Clear the active Excel selection for a specific purpose.
+   * @param purpose 'label' or 'coupon'
+   */
+  async clearActiveExcel(purpose: 'label' | 'coupon' = 'coupon'): Promise<void> {
+    if (!this.db) await this.init();
+
+    const key = purpose === 'label' ? 'activeLabelExcel' : 'activeCouponExcel';
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction(['settings'], 'readwrite');
+      const store = transaction.objectStore('settings');
+      store.delete(key);
+
+      transaction.oncomplete = () => {
+        console.log(`✅ Active Excel (${purpose}) selection cleared`);
         resolve();
       };
       transaction.onerror = () => reject(transaction.error);

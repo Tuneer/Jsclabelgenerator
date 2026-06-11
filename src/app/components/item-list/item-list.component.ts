@@ -64,6 +64,7 @@ export class ItemListComponent implements OnChanges {
   readonly templates: LabelTemplate[];
   readonly pageTypes: { value: LabelPageType; label: string; group: string }[] = [
     // A4 Laser Printer
+    { value: 'a4-9', label: '9 coupons/page (3×3 grid) - Coupon Sheet', group: 'A4 Laser Printer' },
     { value: 'a4-10', label: '10 labels/page (2×5 grid)', group: 'A4 Laser Printer' },
     { value: 'a4-16', label: '16 labels/page (4×4 grid)', group: 'A4 Laser Printer' },
     { value: 'a4-36', label: '36 labels/page (6×6 grid)', group: 'A4 Laser Printer' },
@@ -180,7 +181,9 @@ export class ItemListComponent implements OnChanges {
     }
     
     // For A4: calculate based on grid layout
-    if (pageType === 'a4-10') {
+    if (pageType === 'a4-9') {
+      return selectedCount === 1 ? 9 * copies : selectedCount * copies;
+    } else if (pageType === 'a4-10') {
       return selectedCount === 1 ? 10 * copies : selectedCount * copies;
     } else if (pageType === 'a4-16') {
       return selectedCount === 1 ? 16 * copies : selectedCount * copies;

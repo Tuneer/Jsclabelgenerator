@@ -4,7 +4,7 @@
       <mat-icon>folder_open</mat-icon>
       Excel Management
     </h1>
-    <p class="subtitle">View and manage your uploaded Excel files and sheets</p>
+    <p class="subtitle">Manage your Excel files and set active sources for Label & Coupon generators</p>
   </div>
 
   <!-- Summary Stats -->
@@ -46,6 +46,61 @@
     </mat-card>
   </div>
 
+  <!-- Active Excel Status Cards (Two separate: Labels + Coupons) -->
+  <div class="active-status-row" *ngIf="!loading && excelFiles.length > 0">
+    <!-- Active Label Excel -->
+    <mat-card class="active-excel-card label-card">
+      <mat-card-content>
+        <div class="active-excel-content">
+          <div class="active-excel-info">
+            <mat-icon class="active-excel-icon label-icon">label</mat-icon>
+            <div>
+              <h3>Active Excel for <strong>Label Generator</strong></h3>
+              <p class="active-excel-name" *ngIf="activeLabelTable">
+                {{ getLabelActiveLabel() }}
+              </p>
+              <p class="active-excel-none" *ngIf="!activeLabelTable">
+                No Excel set. Click <strong>Active for Labels</strong> on a file or sheet below.
+              </p>
+            </div>
+          </div>
+          <button mat-stroked-button color="warn" *ngIf="activeLabelTable"
+                  (click)="clearActiveLabel($event)"
+                  matTooltip="Clear active label Excel">
+            <mat-icon>clear</mat-icon>
+            Clear
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Active Coupon Excel -->
+    <mat-card class="active-excel-card coupon-card">
+      <mat-card-content>
+        <div class="active-excel-content">
+          <div class="active-excel-info">
+            <mat-icon class="active-excel-icon coupon-icon">confirmation_number</mat-icon>
+            <div>
+              <h3>Active Excel for <strong>Coupon Generator</strong></h3>
+              <p class="active-excel-name" *ngIf="activeCouponTable">
+                {{ getCouponActiveLabel() }}
+              </p>
+              <p class="active-excel-none" *ngIf="!activeCouponTable">
+                No Excel set. Click <strong>Active for Coupons</strong> on a file or sheet below.
+              </p>
+            </div>
+          </div>
+          <button mat-stroked-button color="warn" *ngIf="activeCouponTable"
+                  (click)="clearActiveCoupon($event)"
+                  matTooltip="Clear active coupon Excel">
+            <mat-icon>clear</mat-icon>
+            Clear
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
   <!-- Loading State -->
   <div class="loading-state" *ngIf="loading">
     <mat-progress-spinner mode="indeterminate" diameter="50"></mat-progress-spinner>
@@ -65,19 +120,45 @@
 
   <!-- Excel Files List -->
   <div class="excel-files-container" *ngIf="!loading && excelFiles.length > 0">
-    <mat-card *ngFor="let excelFile of excelFiles" class="excel-card">
+    <mat-card *ngFor="let excelFile of excelFiles" class="excel-card"
+              [class.coupon-file]="isCouponFile(excelFile)"
+              [class.label-file]="isLabelFile(excelFile)">
       <mat-card-header (click)="toggleExcelExpansion(excelFile)" class="clickable-header">
         <div class="excel-header-content">
           <div class="excel-info">
-            <mat-icon class="excel-icon">description</mat-icon>
+            <mat-icon class="excel-icon">{{ isCouponFile(excelFile) || isLabelFile(excelFile) ? 'star' : 'description' }}</mat-icon>
             <div class="excel-details">
-              <h3>{{ excelFile.fullName }}</h3>
+              <h3>
+                {{ excelFile.fullName }}
+                <span class="file-active-badge coupon-badge" *ngIf="isCouponFile(excelFile)">COUPON</span>
+                <span class="file-active-badge label-badge" *ngIf="isLabelFile(excelFile)">LABELS</span>
+              </h3>
               <p class="upload-date">📅 Uploaded: {{ excelFile.uploadedAt | date:'short' }}</p>
               <p class="storage-location">💾 Storage: {{ excelFile.storageLocation }}</p>
               <p class="excel-summary">📊 {{ excelFile.totalRows }} rows • {{ excelFile.totalColumns }} columns</p>
             </div>
           </div>
           <div class="excel-stats">
+            <div class="file-active-btns">
+              <button
+                mat-raised-button
+                [color]="isLabelFile(excelFile) ? 'accent' : 'primary'"
+                (click)="setActiveLabelFile(excelFile, $event)"
+                matTooltip="Set this Excel file as active for Label Generator (merchant item master)"
+                class="set-active-file-btn label-btn">
+                <mat-icon>{{ isLabelFile(excelFile) ? 'check_circle' : 'label' }}</mat-icon>
+                {{ isLabelFile(excelFile) ? 'Active (Labels)' : 'Active for Labels' }}
+              </button>
+              <button
+                mat-raised-button
+                [color]="isCouponFile(excelFile) ? 'accent' : 'primary'"
+                (click)="setActiveCouponFile(excelFile, $event)"
+                matTooltip="Set this Excel file as active for Coupon Generator (coupon programs)"
+                class="set-active-file-btn coupon-btn">
+                <mat-icon>{{ isCouponFile(excelFile) ? 'check_circle' : 'confirmation_number' }}</mat-icon>
+                {{ isCouponFile(excelFile) ? 'Active (Coupons)' : 'Active for Coupons' }}
+              </button>
+            </div>
             <button 
               mat-icon-button 
               color="warn" 
@@ -99,11 +180,15 @@
             *ngFor="let sheet of excelFile.sheets" 
             class="sheet-card"
             [class.selected]="selectedSheet?.tableName === sheet.tableName"
+            [class.coupon-active]="isCouponSheet(sheet)"
+            [class.label-active]="isLabelSheet(sheet)"
             (click)="onSheetClick(sheet)">
             <mat-card-content>
               <div class="sheet-header">
-                <mat-icon>table_chart</mat-icon>
+                <mat-icon>{{ isCouponSheet(sheet) || isLabelSheet(sheet) ? 'star' : 'table_chart' }}</mat-icon>
                 <h4>{{ sheet.sheetName }}</h4>
+                <span class="active-badge coupon-badge" *ngIf="isCouponSheet(sheet)">COUPON</span>
+                <span class="active-badge label-badge" *ngIf="isLabelSheet(sheet)">LABELS</span>
               </div>
               <div class="sheet-stats">
                 <div class="stat-item">
@@ -119,6 +204,24 @@
                 <code>{{ sheet.tableName }}</code>
               </div>
               <div class="sheet-actions">
+                <button 
+                  mat-raised-button
+                  [color]="isLabelSheet(sheet) ? 'accent' : 'primary'"
+                  (click)="setActiveLabelSheet(sheet, $event)"
+                  matTooltip="Set as active for Label Generator"
+                  class="set-active-btn label-btn">
+                  <mat-icon>{{ isLabelSheet(sheet) ? 'check_circle' : 'label' }}</mat-icon>
+                  {{ isLabelSheet(sheet) ? 'Active' : 'Labels' }}
+                </button>
+                <button 
+                  mat-raised-button
+                  [color]="isCouponSheet(sheet) ? 'accent' : 'primary'"
+                  (click)="setActiveCouponSheet(sheet, $event)"
+                  matTooltip="Set as active for Coupon Generator"
+                  class="set-active-btn coupon-btn">
+                  <mat-icon>{{ isCouponSheet(sheet) ? 'check_circle' : 'confirmation_number' }}</mat-icon>
+                  {{ isCouponSheet(sheet) ? 'Active' : 'Coupons' }}
+                </button>
                 <button 
                   mat-icon-button 
                   color="warn" 

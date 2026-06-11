@@ -1,6 +1,6 @@
 export type LabelPageType = 
   // A4 Laser Printer
-  | 'a4-10' | 'a4-16' | 'a4-36'
+  | 'a4-9' | 'a4-10' | 'a4-16' | 'a4-36'
   // Brother QL-700/800 Label Sizes
   | 'brother-17x54'   // 17mm × 54mm (Address labels)
   | 'brother-29x90'   // 29mm × 90mm (Standard address)

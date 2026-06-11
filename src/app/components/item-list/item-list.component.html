@@ -110,19 +110,19 @@
     <mat-label>Printer & Page Size</mat-label>
     <mat-select [(value)]="selectedPageType">
       <mat-optgroup label="A4 Laser Printer (Multi-Label)">
-        <mat-option *ngFor="let p of pageTypes.slice(0, 3)" [value]="p.value">{{ p.label }}</mat-option>
+        <mat-option *ngFor="let p of pageTypes.slice(0, 4)" [value]="p.value">{{ p.label }}</mat-option>
       </mat-optgroup>
       
       <mat-optgroup label="Brother QL-700/800 (Single Labels)">
-        <mat-option *ngFor="let p of pageTypes.slice(3, 7)" [value]="p.value">{{ p.label }}</mat-option>
+        <mat-option *ngFor="let p of pageTypes.slice(4, 8)" [value]="p.value">{{ p.label }}</mat-option>
       </mat-optgroup>
       
       <mat-optgroup label="Brother QL-810 (DK 2551)">
-        <mat-option *ngFor="let p of pageTypes.slice(7, 8)" [value]="p.value">{{ p.label }}</mat-option>
+        <mat-option *ngFor="let p of pageTypes.slice(8, 9)" [value]="p.value">{{ p.label }}</mat-option>
       </mat-optgroup>
       
       <mat-optgroup label="Zebra Label Printer (Single Labels)">
-        <mat-option *ngFor="let p of pageTypes.slice(8, 12)" [value]="p.value">{{ p.label }}</mat-option>
+        <mat-option *ngFor="let p of pageTypes.slice(9, 13)" [value]="p.value">{{ p.label }}</mat-option>
       </mat-optgroup>
     </mat-select>
   </mat-form-field>
