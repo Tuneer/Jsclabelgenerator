@@ -23,7 +23,8 @@
 
   <!-- Main Content -->
   <mat-sidenav-content>
-    <mat-toolbar color="primary" class="main-toolbar">
+    <!-- Toolbar - Hidden on login page -->
+    <mat-toolbar color="primary" class="main-toolbar" *ngIf="currentUser">
       <!-- Hamburger Menu (Mobile Only) -->
       <button mat-icon-button class="hamburger-menu" (click)="toggleSidenav()">
         <mat-icon>menu</mat-icon>
@@ -31,15 +32,6 @@
       
       <span class="app-title">JSC Label Generator</span>
       <span class="spacer"></span>
-      
-      <!-- User Info & Logout -->
-      <div class="user-section" *ngIf="currentUser">
-        <mat-icon class="user-icon">person</mat-icon>
-        <span class="user-name">{{ currentUser.displayName }}</span>
-        <button mat-icon-button (click)="onLogout()" matTooltip="Logout">
-          <mat-icon>logout</mat-icon>
-        </button>
-      </div>
       
       <!-- Desktop Navigation -->
       <nav class="nav-links">
@@ -52,6 +44,31 @@
           <span>{{ link.label }}</span>
         </a>
       </nav>
+      
+      <!-- User Avatar with Dropdown Menu -->
+      <div class="user-menu-container" *ngIf="currentUser">
+        <button class="user-avatar-btn" (click)="toggleUserMenu()" matTooltip="User Menu">
+          <span class="avatar-letter">{{ getUserInitial() }}</span>
+        </button>
+        
+        <!-- Dropdown Menu -->
+        <div class="user-dropdown" *ngIf="showUserMenu" (clickOutside)="closeUserMenu()">
+          <div class="dropdown-header">
+            <div class="dropdown-avatar">
+              <span>{{ getUserInitial() }}</span>
+            </div>
+            <div class="dropdown-user-info">
+              <div class="dropdown-user-name">{{ currentUser.displayName }}</div>
+              <div class="dropdown-user-role">{{ currentUser.role | titlecase }}</div>
+            </div>
+          </div>
+          <div class="dropdown-divider"></div>
+          <button class="dropdown-item" (click)="onLogout()">
+            <mat-icon>logout</mat-icon>
+            <span>Logout</span>
+          </button>
+        </div>
+      </div>
     </mat-toolbar>
 
     <div class="app-content">

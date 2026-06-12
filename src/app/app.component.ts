@@ -10,6 +10,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { SystemInfoService } from './services/system-info.service';
 import { AuthService, CurrentUser } from './services/auth.service';
+import { ClickOutsideDirective } from './directives/click-outside.directive';
 
 @Component({
   standalone: true,
@@ -24,7 +25,8 @@ import { AuthService, CurrentUser } from './services/auth.service';
     MatIconModule,
     MatSidenavModule,
     MatListModule,
-    MatTooltipModule
+    MatTooltipModule,
+    ClickOutsideDirective
   ]
 })
 export class AppComponent {
@@ -32,6 +34,7 @@ export class AppComponent {
   isSidenavOpen = false;
   currentUser: CurrentUser | null = null;
   isAdmin = false;
+  showUserMenu = false;
 
   ipAddress$!: Observable<string>;
   now$!: Observable<Date>;
@@ -79,7 +82,21 @@ export class AppComponent {
     this.isSidenavOpen = false;
   }
 
+  getUserInitial(): string {
+    if (!this.currentUser) return 'U';
+    return this.currentUser.displayName.charAt(0).toUpperCase();
+  }
+
+  toggleUserMenu(): void {
+    this.showUserMenu = !this.showUserMenu;
+  }
+
+  closeUserMenu(): void {
+    this.showUserMenu = false;
+  }
+
   onLogout(): void {
+    this.closeUserMenu();
     if (confirm('Are you sure you want to logout?')) {
       this.authService.logout();
       this.router.navigate(['/login']);

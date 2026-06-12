@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { IndexedDBService } from '../../services/indexed-db.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   standalone: true,
@@ -20,7 +21,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   indexedDBStatus: string = 'Checking...';
   sqlDBStatus: string = 'Checking...';
   private dateTimeInterval: any;
-  navigationCards = [
+  isAdmin = false;
+  
+  allNavigationCards = [
     {
       title: 'Label Generator',
       description: 'Filter items, edit details, and generate price tags and labels for printing',
@@ -40,23 +43,32 @@ export class DashboardComponent implements OnInit, OnDestroy {
       description: 'Upload and import item data from Excel files to local database',
       icon: 'upload_file',
       route: '/excel-import',
-      color: '#388e3c'
+      color: '#388e3c',
+      adminOnly: true
     },
     {
       title: 'Excel Management',
       description: 'View, manage, and select active Excel files for label and coupon generation',
       icon: 'folder_open',
       route: '/excel-management',
-      color: '#f57c00'
+      color: '#f57c00',
+      adminOnly: true
     }
   ];
 
+  navigationCards = this.allNavigationCards;
+
   constructor(
     private http: HttpClient,
-    private indexedDBService: IndexedDBService
+    private indexedDBService: IndexedDBService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
+    // Check user role
+    this.isAdmin = this.authService.isAdmin();
+    this.updateNavigationCards();
+    
     this.updateDateTime();
     this.fetchIPAddress();
     this.checkDatabaseServices();
@@ -65,6 +77,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.dateTimeInterval = setInterval(() => {
       this.updateDateTime();
     }, 1000);
+  }
+
+  private updateNavigationCards(): void {
+    // Filter cards based on user role
+    if (this.isAdmin) {
+      this.navigationCards = this.allNavigationCards;
+    } else {
+      this.navigationCards = this.allNavigationCards.filter(card => !card.adminOnly);
+    }
   }
 
   ngOnDestroy(): void {
