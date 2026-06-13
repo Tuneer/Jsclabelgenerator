@@ -75,6 +75,7 @@ export class CouponGeneratorPageComponent implements OnInit {
     'savingsAmount',
     'validFrom',
     'validThru',
+    'imageUrl',
     'category'
   ];
 
@@ -87,6 +88,9 @@ export class CouponGeneratorPageComponent implements OnInit {
 
   // Coupon template (hardcoded for coupon mode)
   couponTemplate!: LabelTemplate;
+
+  // Expose Math to template
+  Math = Math;
 
   constructor(
     private indexedDBService: IndexedDBService,
@@ -203,9 +207,10 @@ export class CouponGeneratorPageComponent implements OnInit {
 
   getTotalCoupons(): number {
     const count = this.selectedIds.size;
-    if (count === 1) {
-      return 9 * this.copies; // Fill entire page
-    }
+    if (count === 0) return 0;
+    
+    // Each selected coupon appears once per sheet
+    // Total = selected coupons × sheet copies
     return count * this.copies;
   }
 

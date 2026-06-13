@@ -161,6 +161,14 @@
             </td>
           </ng-container>
 
+          <!-- Image URL -->
+          <ng-container matColumnDef="imageUrl">
+            <th mat-header-cell *matHeaderCellDef> Image URL </th>
+            <td mat-cell *matCellDef="let row">
+              <input matInput [(ngModel)]="row.imageUrl" placeholder="https://..." />
+            </td>
+          </ng-container>
+
           <!-- Category -->
           <ng-container matColumnDef="category">
             <th mat-header-cell *matHeaderCellDef> Program </th>
@@ -187,17 +195,16 @@
       <!-- Print Controls -->
       <div class="print-controls">
         <mat-form-field appearance="outline" class="copies-field">
-          <mat-label>Copies</mat-label>
+          <mat-label>Sheet Copies</mat-label>
           <input matInput type="number" min="1" max="999" [(ngModel)]="copies" />
-          <mat-hint>Copies of coupon sheet</mat-hint>
+          <mat-hint>Number of complete sheets</mat-hint>
         </mat-form-field>
 
         <div class="print-summary" *ngIf="selectedIds.size > 0">
           <mat-icon>info</mat-icon>
           <span>
             {{ selectedIds.size }} coupon(s) selected &rarr; 
-            {{ getTotalCoupons() }} total coupons on 
-            {{ selectedIds.size === 1 ? copies : (getTotalCoupons() / 9 | number:'1.0-1') }} page(s)
+            {{ Math.ceil(getTotalCoupons() / 9) }} page(s)
           </span>
         </div>
 

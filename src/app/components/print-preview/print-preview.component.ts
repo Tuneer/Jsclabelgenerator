@@ -104,54 +104,39 @@ export class PrintPreviewComponent implements OnInit, OnChanges {
         this.totalSlots = 10;
     }
     
-    // Single item replication on A4 (fill all slots with same item)
-    if (items.length === 1 && this.pageType.startsWith('a4-')) {
-      console.log('🔄 Single item replication mode on A4');
-      const singlePage = [];
-      for (let i = 0; i < this.totalSlots; i++) {
-        singlePage.push({ item: items[0], isEmpty: false });
-      }
-      this.labelSlots = singlePage;
-      // Duplicate page for each copy
-      for (let copy = 0; copy < this.copies; copy++) {
-        this.pages.push([...singlePage]);
-      }
-      this.totalPages = this.pages.length;
-    } else {
-      // Normal mode: Multiple pages if needed
-      const basePagesCount = Math.ceil(items.length / this.totalSlots);
-      this.totalPages = basePagesCount * this.copies;
+    // Normal mode: Multiple pages if needed (NO single item replication)
+    const basePagesCount = Math.ceil(items.length / this.totalSlots);
+    this.totalPages = basePagesCount * this.copies;
+    
+    // Generate base pages
+    for (let pageIndex = 0; pageIndex < basePagesCount; pageIndex++) {
+      const pageSlots = [];
+      const startIdx = pageIndex * this.totalSlots;
+      const endIdx = Math.min(startIdx + this.totalSlots, items.length);
       
-      // Generate base pages
-      for (let pageIndex = 0; pageIndex < basePagesCount; pageIndex++) {
-        const pageSlots = [];
-        const startIdx = pageIndex * this.totalSlots;
-        const endIdx = Math.min(startIdx + this.totalSlots, items.length);
-        
-        // Fill slots for this page
-        for (let slotIdx = 0; slotIdx < this.totalSlots; slotIdx++) {
-          const itemIdx = startIdx + slotIdx;
-          if (itemIdx < items.length) {
-            pageSlots.push({ item: items[itemIdx], isEmpty: false });
-          } else {
-            pageSlots.push({ item: null, isEmpty: true });
-          }
-        }
-        
-        this.pages.push(pageSlots);
-      }
-      
-      // Duplicate all pages for each copy
-      if (this.copies > 1) {
-        const basePages = [...this.pages];
-        for (let copy = 1; copy < this.copies; copy++) {
-          basePages.forEach(page => this.pages.push([...page]));
+      // Fill slots for this page
+      for (let slotIdx = 0; slotIdx < this.totalSlots; slotIdx++) {
+        const itemIdx = startIdx + slotIdx;
+        if (itemIdx < items.length) {
+          pageSlots.push({ item: items[itemIdx], isEmpty: false });
+        } else {
+          pageSlots.push({ item: null, isEmpty: true });
         }
       }
       
-      // First page slots for backward compatibility
-      this.labelSlots = this.pages[0] || [];
+      this.pages.push(pageSlots);
     }
+    
+    // Duplicate all pages for each copy
+    if (this.copies > 1) {
+      const basePages = [...this.pages];
+      for (let copy = 1; copy < this.copies; copy++) {
+        basePages.forEach(page => this.pages.push([...page]));
+      }
+    }
+    
+    // First page slots for backward compatibility
+    this.labelSlots = this.pages[0] || [];
     
     console.log(`🏷️ Print Preview Setup:`);
     console.log(`   Page Type: ${this.pageType}`);
@@ -893,41 +878,39 @@ ${printerType === 'Brother QL' ? `
    * Generate HTML for coupon label layout (3×3 grid on A4)
    * Each coupon has: beige bg, red header, product image, dark blue footer with dates + PLU
    * Design matches reference: serif font for header, clean layout, full-width footer bar
+   * 
+   * Simple logic:
+   * - Selected coupons are placed in order across pages (9 per page)
+   * - Last page may have empty slots
+   * - Global "copies" field duplicates entire sheets
    */
   private generateCouponHTML(items: any[]): string {
     const copies = this.copies || 1;
     const totalSlots = 9; // 3×3 grid
     
-    // Build pages: single item replicates, multiple items fill grid
+    // Build pages: Place coupons in order, no per-coupon duplication
     let allPages: any[][] = [];
     
-    if (items.length === 1) {
-      const singlePage = [];
-      for (let i = 0; i < totalSlots; i++) {
-        singlePage.push({ item: items[0], isEmpty: false });
-      }
-      for (let copy = 0; copy < copies; copy++) {
-        allPages.push([...singlePage]);
-      }
-    } else {
-      const totalPages = Math.ceil(items.length / totalSlots);
-      const basePages: any[][] = [];
-      for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
-        const pageSlots = [];
-        const startIdx = pageIndex * totalSlots;
-        for (let slotIdx = 0; slotIdx < totalSlots; slotIdx++) {
-          const itemIdx = startIdx + slotIdx;
-          if (itemIdx < items.length) {
-            pageSlots.push({ item: items[itemIdx], isEmpty: false });
-          } else {
-            pageSlots.push({ item: null, isEmpty: true });
-          }
+    const totalPages = Math.ceil(items.length / totalSlots);
+    const basePages: any[][] = [];
+    
+    for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
+      const pageSlots = [];
+      const startIdx = pageIndex * totalSlots;
+      for (let slotIdx = 0; slotIdx < totalSlots; slotIdx++) {
+        const itemIdx = startIdx + slotIdx;
+        if (itemIdx < items.length) {
+          pageSlots.push({ item: items[itemIdx], isEmpty: false });
+        } else {
+          pageSlots.push({ item: null, isEmpty: true });
         }
-        basePages.push(pageSlots);
       }
-      for (let copy = 0; copy < copies; copy++) {
-        basePages.forEach(page => allPages.push([...page]));
-      }
+      basePages.push(pageSlots);
+    }
+    
+    // Duplicate all pages for sheet copies
+    for (let copy = 0; copy < copies; copy++) {
+      basePages.forEach(page => allPages.push([...page]));
     }
     
     // Generate coupon HTML for each page
@@ -1124,21 +1107,16 @@ ${printerType === 'Brother QL' ? `
               display: flex;
               justify-content: center;
               align-items: center;
-              margin-top: 3px;
+              margin-top: 8px;
               flex: 1;
-              min-height: 30px;
-              max-height: 55%;
+              min-height: 80px;
+              max-height: 70%;
               overflow: hidden;
             }
             
-            .coupon-no-image {
-              min-height: 0;
-              flex: 0;
-            }
-            
             .coupon-product-img {
-              max-width: 90%;
-              max-height: 65px;
+              max-width: 95%;
+              max-height: 120px;
               object-fit: contain;
               display: block;
             }

@@ -382,16 +382,16 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: 4px;
+  margin-top: 8px;
   flex: 1;
-  min-height: 40px;
-  max-height: 50%;
+  min-height: 80px;
+  max-height: 70%;
   overflow: hidden;
 }
 
 .coupon-product-img {
   max-width: 95%;
-  max-height: 70px;
+  max-height: 120px;
   object-fit: contain;
   display: block;
 }
